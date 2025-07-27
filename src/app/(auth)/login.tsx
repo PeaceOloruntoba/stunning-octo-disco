@@ -1,20 +1,14 @@
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../config/firebase";
+import { useLogin } from "../../hooks/auth";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { login, error } = useLogin();
 
   const handleLogin = () => {
-    signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        console.log("Logged in:", userCredential.user);
-      })
-      .catch((error) => {
-        console.error("Error:", error.message);
-      });
+    login(email, password);
   };
 
   return (
@@ -38,6 +32,7 @@ export default function LoginScreen() {
         onChangeText={setPassword}
         secureTextEntry
       />
+      {error && <Text className="text-red-500 mb-5">{error}</Text>}
       <Text className="text-blue-500 mb-5">Passwort vergessen?</Text>
       <TouchableOpacity
         className="w-full p-3 bg-purple-500 rounded-lg"
