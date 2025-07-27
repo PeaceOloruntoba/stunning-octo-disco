@@ -13,18 +13,18 @@ export default function LandingPage() {
       />
       <TouchableOpacity className="flex-row w-3/4">
         <TouchableOpacity
-          className="flex-1 bg-blue-500 p-4 rounded-l-lg"
+          className="flex-1 bg-blue-500 p-8 rounded-l-lg"
           onPress={() => router.push("/(auth)/login")}
         >
-          <View className="flex-1 bg-blue-500 p-4 rounded-l-lg">
+          <View className="bg-blue-500 rounded-l-lg">
             <Text className="text-white text-center">Login</Text>
           </View>
         </TouchableOpacity>
         <TouchableOpacity
-          className="flex-1 bg-purple-500 p-4 rounded-r-lg"
+          className=" flex-1 bg-purple-500 p-8 rounded-r-lg"
           onPress={() => router.push("/(auth)/signup")}
         >
-          <View className="flex-1 bg-purple-500 p-4 rounded-r-lg">
+          <View className="bg-purple-500 rounded-r-lg">
             <Text className="text-white text-center">Signup</Text>
           </View>
         </TouchableOpacity>
