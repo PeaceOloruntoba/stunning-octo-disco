@@ -1,6 +1,7 @@
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import { useState } from "react";
 import { useSignup } from "../../hooks/auth";
+import { useRouter } from "expo-router";
 import CheckBox from "@react-native-community/checkbox";
 
 export default function SignupScreen() {
@@ -11,6 +12,7 @@ export default function SignupScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [newsletter, setNewsletter] = useState(false);
   const { signup, error } = useSignup();
+  const router = useRouter();
 
   const handleSignup = () => {
     signup(email, password, confirmPassword);
@@ -57,7 +59,8 @@ export default function SignupScreen() {
           <CheckBox
             value={newsletter}
             onValueChange={setNewsletter}
-            tintColors={{ true: "#6b46c1", false: "#a0aec0" }} // Optional: Customize colors
+            tintColors={{ true: "#6b46c1", false: "#a0aec0" }}
+            style={{ marginRight: 8 }} // Add some spacing
           />
           <Text>Newsletter</Text>
           <Text>Daten Schutz blab bla bla</Text>
@@ -65,7 +68,8 @@ export default function SignupScreen() {
         <View className="flex-1 p-3 bg-white rounded-lg">
           <CheckBox
             value={false}
-            tintColors={{ true: "#6b46c1", false: "#a0aec0" }} // Optional: Customize colors
+            tintColors={{ true: "#6b46c1", false: "#a0aec0" }}
+            style={{ marginRight: 8 }} // Add some spacing
           />
           <Text>Daten Schutz blab bla bla</Text>
         </View>
@@ -76,6 +80,14 @@ export default function SignupScreen() {
         onPress={handleSignup}
       >
         <Text className="text-white text-center">Jetzt registrieren</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        className="mt-5"
+        onPress={() => router.push("/(auth)/login")}
+      >
+        <Text className="text-purple-500">
+          Bereits ein Account? Jetzt einloggen
+        </Text>
       </TouchableOpacity>
     </View>
   );
