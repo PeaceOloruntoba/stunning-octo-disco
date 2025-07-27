@@ -1,23 +1,34 @@
-import { Link } from "expo-router";
-import React from "react";
-import { Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { View, Image, TouchableOpacity, Text } from "react-native";
+import { useRouter } from "expo-router";
 
-export default function Page() {
+export default function LandingPage() {
+  const router = useRouter();
+
   return (
-    <View className="flex flex-1">
-      <View className="flex-1 items-center justify-center">
-        <Text className="text-2xl font-bold">Welcome to Expo Router!</Text>
-        <Link href="/(tabs)/home" className="mt-4 text-blue-500">
-          Go to Home
-        </Link>
-      </View>
-      <View className="p-4 bg-gray-100">
-        <Text className="text-sm text-gray-600">
-          This is a simple example of using Expo Router with React Native.
-        </Text>
-      </View>
+    <View className="flex-1 bg-gray-100 justify-center items-center">
+      <Image
+        source={{ uri: "https://via.placeholder.com/300x200" }}
+        className="w-3/4 h-1/3 mb-10"
+        resizeMode="contain"
+      />
+      <TouchableOpacity className="flex-row w-3/4">
+        <TouchableOpacity
+          className="flex-1 bg-blue-500 p-4 rounded-l-lg"
+          onPress={() => router.push("/(auth)/login")}
+        >
+          <View className="flex-1 bg-blue-500 p-4 rounded-l-lg">
+            <Text className="text-white text-center">Login</Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          className="flex-1 bg-purple-500 p-4 rounded-r-lg"
+          onPress={() => router.push("/(auth)/signup")}
+        >
+          <View className="flex-1 bg-purple-500 p-4 rounded-r-lg">
+            <Text className="text-white text-center">Signup</Text>
+          </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </View>
   );
 }
-
