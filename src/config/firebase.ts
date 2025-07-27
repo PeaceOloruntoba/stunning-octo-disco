@@ -1,9 +1,5 @@
 import { initializeApp, FirebaseApp } from "firebase/app";
-import {
-  initializeAuth,
-  getReactNativePersistence,
-  Auth,
-} from "firebase/auth/react-native";
+import { initializeAuth, Auth } from "firebase/auth"; // Removed getReactNativePersistence since it's not available
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 
@@ -28,14 +24,17 @@ const firebaseConfig: FirebaseConfig = {
   appId: Constants.expoConfig.extra.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase app
-const app: FirebaseApp = initializeApp(firebaseConfig);
+// Initialize Firebase app (check for existing instance)
+let app: FirebaseApp;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (error) {
+  // If app already exists, get the existing instance
+  app = initializeApp(firebaseConfig, "existing"); // Use a different name to avoid conflict
+}
 
-// Initialize Auth with persistence
-const auth: Auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage),
-});
+// Initialize Auth (no persistence for now due to missing getReactNativePersistence)
+const auth: Auth = initializeAuth(app);
 
-// Export types and instances
 export { app, auth };
 export type { FirebaseApp, Auth };

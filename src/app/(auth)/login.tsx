@@ -48,7 +48,7 @@ export default function LoginScreen() {
           <Text>G</Text> {/* Google icon */}
         </TouchableOpacity>
         <TouchableOpacity className="p-3 bg-white rounded-lg">
-          <Text></Text> {/* Apple icon */}
+          <Text>A</Text> {/* Apple icon */}
         </TouchableOpacity>
       </View>
       <Text className="mt-5 text-purple-500">

@@ -1,12 +1,7 @@
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  CheckBox,
-} from "react-native";
+import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import { useState } from "react";
 import { useSignup } from "../../hooks/auth";
+import CheckBox from "@react-native-community/checkbox";
 
 export default function SignupScreen() {
   const [lastName, setLastName] = useState("");
@@ -59,12 +54,19 @@ export default function SignupScreen() {
       />
       <View className="flex-row w-full mb-4">
         <View className="flex-1 p-3 bg-white rounded-lg mr-2">
-          <CheckBox value={newsletter} onValueChange={setNewsletter} />
+          <CheckBox
+            value={newsletter}
+            onValueChange={setNewsletter}
+            tintColors={{ true: "#6b46c1", false: "#a0aec0" }} // Optional: Customize colors
+          />
           <Text>Newsletter</Text>
           <Text>Daten Schutz blab bla bla</Text>
         </View>
         <View className="flex-1 p-3 bg-white rounded-lg">
-          <CheckBox value={false} />
+          <CheckBox
+            value={false}
+            tintColors={{ true: "#6b46c1", false: "#a0aec0" }} // Optional: Customize colors
+          />
           <Text>Daten Schutz blab bla bla</Text>
         </View>
       </View>
