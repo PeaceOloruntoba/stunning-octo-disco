@@ -3,11 +3,10 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  CheckBox,
 } from "react-native";
 import { useState } from "react";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import CheckBox from "@react-native-community/checkbox";
-const auth = getAuth();
+import { useSignup } from "../../hooks/auth";
 
 export default function SignupScreen() {
   const [lastName, setLastName] = useState("");
@@ -16,19 +15,10 @@ export default function SignupScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [newsletter, setNewsletter] = useState(false);
+  const { signup, error } = useSignup();
 
   const handleSignup = () => {
-    if (password !== confirmPassword) {
-      console.error("Passwords do not match");
-      return;
-    }
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        console.log("Signed up:", userCredential.user);
-      })
-      .catch((error) => {
-        console.error("Error:", error.message);
-      });
+    signup(email, password, confirmPassword);
   };
 
   return (
@@ -78,6 +68,7 @@ export default function SignupScreen() {
           <Text>Daten Schutz blab bla bla</Text>
         </View>
       </View>
+      {error && <Text className="text-red-500 mb-5">{error}</Text>}
       <TouchableOpacity
         className="w-full p-3 bg-purple-500 rounded-lg"
         onPress={handleSignup}
