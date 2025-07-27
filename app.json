@@ -12,7 +12,8 @@
         {
           "origin": "https://n"
         }
-      ]
+      ],
+      "@react-native-community/checkbox"
     ],
     "name": "stunning-octo-disco",
     "slug": "stunning-octo-disco",
