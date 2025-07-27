@@ -1,38 +1,65 @@
-import { Stack } from 'expo-router';
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { useEffect } from 'react';
-import { useRouter } from 'expo-router';
-import Constants from 'expo-constants';
+import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import { useState } from "react";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
-const firebaseConfig = {
-  apiKey: Constants.expoConfig.extra.EXPO_PUBLIC_FIREBASE_API_KEY,
-  authDomain: Constants.expoConfig.extra.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: Constants.expoConfig.extra.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: Constants.expoConfig.extra.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: Constants.expoConfig.extra.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: Constants.expoConfig.extra.EXPO_PUBLIC_FIREBASE_APP_ID,
-};
+const auth = getAuth();
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+export default function LoginScreen() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-export default function AuthLayout() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        router.replace('/(tabs)');
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+  const handleLogin = () => {
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        console.log("Logged in:", userCredential.user);
+      })
+      .catch((error) => {
+        console.error("Error:", error.message);
+      });
+  };
 
   return (
-    <Stack>
-      <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="signup" options={{ headerShown: false }} />
-    </Stack>
+    <View className="flex-1 bg-gray-100 justify-center items-center p-5">
+      <Text className="text-2xl font-bold mb-5">Hello Again!</Text>
+      <Text className="text-center mb-10">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Amet, urna, a,
+        fusce
+      </Text>
+      <TextInput
+        className="w-full p-3 mb-4 bg-white rounded-lg"
+        placeholder="Dein Username"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+      />
+      <TextInput
+        className="w-full p-3 mb-4 bg-white rounded-lg"
+        placeholder="Dein Passwort"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+      <Text className="text-blue-500 mb-5">Passwort vergessen?</Text>
+      <TouchableOpacity
+        className="w-full p-3 bg-purple-500 rounded-lg"
+        onPress={handleLogin}
+      >
+        <Text className="text-white text-center">Login</Text>
+      </TouchableOpacity>
+      <View className="flex-row justify-center mt-5">
+        <TouchableOpacity className="p-3 bg-white mr-2 rounded-lg">
+          <Text>f</Text> {/* Facebook icon */}
+        </TouchableOpacity>
+        <TouchableOpacity className="p-3 bg-white mr-2 rounded-lg">
+          <Text>G</Text> {/* Google icon */}
+        </TouchableOpacity>
+        <TouchableOpacity className="p-3 bg-white rounded-lg">
+          <Text></Text> {/* Apple icon */}
+        </TouchableOpacity>
+      </View>
+      <Text className="mt-5 text-purple-500">
+        Du hast keine Account? Jetzt Registrieren
+      </Text>
+    </View>
   );
 }

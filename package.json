@@ -10,6 +10,7 @@
     "deploy": "npx expo export -p web && npx eas-cli@latest deploy"
   },
   "dependencies": {
+    "@react-native-community/checkbox": "^0.5.20",
     "expo": "^53.0.4",
     "expo-checkbox": "^4.1.4",
     "expo-constants": "~17.1.4",
