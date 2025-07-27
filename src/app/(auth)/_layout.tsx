@@ -1,19 +1,21 @@
-import { Stack } from 'expo-router';
-import { useEffect } from 'react';
-import { useRouter } from 'expo-router';
-import { auth } from '../../config/firebase';
+import { Stack } from "expo-router";
+import { useEffect } from "react";
+import { useRouter } from "expo-router";
+import { useAuthState } from "../../hooks/auth";
 
 export default function AuthLayout() {
   const router = useRouter();
+  const { user, loading } = useAuthState();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        router.replace('/(tabs)');
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+    if (!loading && user) {
+      router.replace("/(tabs)");
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return null;
+  }
 
   return (
     <Stack>
