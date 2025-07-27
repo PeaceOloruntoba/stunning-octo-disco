@@ -1,11 +1,13 @@
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import { useState } from "react";
 import { useLogin } from "../../hooks/auth";
+import { useRouter } from "expo-router";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { login, error } = useLogin();
+  const router = useRouter();
 
   const handleLogin = () => {
     login(email, password);
@@ -51,9 +53,14 @@ export default function LoginScreen() {
           <Text>A</Text> {/* Apple icon */}
         </TouchableOpacity>
       </View>
-      <Text className="mt-5 text-purple-500">
-        Du hast keine Account? Jetzt Registrieren
-      </Text>
+      <TouchableOpacity
+        className="mt-5"
+        onPress={() => router.push("/(auth)/signup")}
+      >
+        <Text className="text-purple-500">
+          Du hast keine Account? Jetzt Registrieren
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
