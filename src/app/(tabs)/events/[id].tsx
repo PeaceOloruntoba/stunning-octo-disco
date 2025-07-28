@@ -1,4 +1,3 @@
-// app/(tabs)/events/[id].tsx
 import React from "react";
 import {
   View,
@@ -10,17 +9,20 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
-} from "react-native"; // Import StyleSheet
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import MapView, { Marker } from "react-native-maps";
-import { useEvent, useFavorites } from "../../../hooks/events";
+import {
+  useEvent,
+  useFavorites,
+  useParticipatedEvents,
+} from "../../../hooks/events";
 import { useAuthState } from "../../../hooks/auth";
 
 const { width } = Dimensions.get("window");
 
-// Define a separate stylesheet for the map to use absoluteFillObject
 const localStyles = StyleSheet.create({
   map: {
     ...StyleSheet.absoluteFillObject,
@@ -39,6 +41,11 @@ export default function EventDetailsScreen() {
     loading: favLoading,
     toggleFavorite,
   } = useFavorites(user);
+  const {
+    addParticipatedEvent,
+    loading: participateLoading,
+    error: participateError,
+  } = useParticipatedEvents(user);
 
   const isFavorite = eventId ? favoriteEventIds.includes(eventId) : false;
 
@@ -56,6 +63,51 @@ export default function EventDetailsScreen() {
     }
   };
 
+  const handleParticipate = async () => {
+    if (!user) {
+      Alert.alert(
+        "Anmeldung erforderlich",
+        "Bitte melden Sie sich an, um an Events teilzunehmen."
+      );
+      router.push("/(auth)/login");
+      return;
+    }
+    if (!eventId) return;
+
+    Alert.alert(
+      "Zahlung für Event",
+      `Möchtest du für "${event?.clubName}" teilnehmen? Preis: ${event?.price}`,
+      [
+        {
+          text: "Abbrechen",
+          style: "cancel",
+        },
+        {
+          text: "Bezahlen (Simuliert)",
+          onPress: async () => {
+            console.log(`Simulating payment for event: ${eventId}`);
+
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+
+            const success = await addParticipatedEvent(eventId, "upcoming");
+            if (success) {
+              Alert.alert(
+                "Erfolg",
+                "Du nimmst jetzt an diesem Event teil! Es wurde zu deinem Kalender hinzugefügt."
+              );
+              router.push("/(tabs)/calendar");
+            } else {
+              Alert.alert(
+                "Fehler",
+                participateError || "Teilnahme konnte nicht hinzugefügt werden."
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const renderStars = (rating: number) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -71,7 +123,7 @@ export default function EventDetailsScreen() {
     return <View className="flex-row">{stars}</View>;
   };
 
-  if (loading || favLoading) {
+  if (loading || favLoading || participateLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-gray-100">
         <ActivityIndicator size="large" color="#0000ff" />
@@ -190,7 +242,7 @@ export default function EventDetailsScreen() {
           </Text>
           <View className="w-full h-52 rounded-md overflow-hidden border border-gray-200 mb-4">
             <MapView
-              style={localStyles.map} // Use the StyleSheet.absoluteFillObject here
+              style={localStyles.map}
               initialRegion={{
                 latitude: event.latitude,
                 longitude: event.longitude,
@@ -228,8 +280,16 @@ export default function EventDetailsScreen() {
           ))}
 
           {/* Participate Button */}
-          <TouchableOpacity className="w-full p-4 bg-black rounded-lg mt-8 mb-20 items-center justify-center">
-            <Text className="text-white font-bold text-lg">Teilnehmen</Text>
+          <TouchableOpacity
+            className="w-full p-4 bg-black rounded-lg mt-8 mb-20 items-center justify-center"
+            onPress={handleParticipate}
+            disabled={participateLoading}
+          >
+            {participateLoading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-white font-bold text-lg">Teilnehmen</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
