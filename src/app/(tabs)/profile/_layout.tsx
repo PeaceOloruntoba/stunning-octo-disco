@@ -1,21 +1,17 @@
-// app/(tabs)/profile/_layout.tsx
 import { Stack } from "expo-router";
 
 export default function ProfileStackLayout() {
   return (
     <Stack>
-      {/* The 'index' screen (profile/index.tsx) should not have a header */}
       <Stack.Screen name="index" options={{ headerShown: false }} />
-
-      {/* All other sub-screens within the profile stack should have headers */}
       <Stack.Screen
         name="edit-profile"
         options={{
-          headerShown: true, // Explicitly show header
+          headerShown: true,
           title: "Profil bearbeiten",
           headerTitleStyle: {
             fontWeight: "bold",
-          }, // Hide "Back" text on iOS
+          },
         }}
       />
       <Stack.Screen
