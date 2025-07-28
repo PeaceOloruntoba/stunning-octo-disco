@@ -1,3 +1,4 @@
+// hooks/userProfile.ts
 import { useState } from "react";
 import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
@@ -8,14 +9,15 @@ export interface UserProfile {
   email: string | null;
   firstName?: string;
   lastName?: string;
-  dateOfBirth?: string;
-  gender?: string;
+  dateOfBirth?: string; // Storing as ISO string (YYYY-MM-DD)
+  gender?: string; // 'male', 'female', 'prefer_not_to_say'
   newsletter?: boolean;
   datenschutzAccepted?: boolean;
   preferences?: {
     categories: string[];
     subcategories: { [key: string]: string[] };
   };
+  // Add other profile fields here as needed
 }
 
 export const useUserProfile = () => {
@@ -31,7 +33,7 @@ export const useUserProfile = () => {
     gender: string,
     newsletter: boolean,
     datenschutzAccepted: boolean
-  ) => {
+  ): Promise<UserProfile | null> => {
     setLoading(true);
     setError(null);
     try {
@@ -41,12 +43,12 @@ export const useUserProfile = () => {
         email: user.email,
         firstName,
         lastName,
-        dateOfBirth: dateOfBirth.toISOString().split("T")[0],
+        dateOfBirth: dateOfBirth.toISOString().split("T")[0], // Store as YYYY-MM-DD
         gender,
         newsletter,
         datenschutzAccepted,
       };
-      await setDoc(userRef, newProfile, { merge: true });
+      await setDoc(userRef, newProfile, { merge: true }); // Use merge to avoid overwriting existing fields
       setProfile(newProfile);
       console.log("User profile created/updated:", newProfile);
       return newProfile;
@@ -85,13 +87,13 @@ export const useUserProfile = () => {
   const updateUserProfile = async (
     uid: string,
     updates: Partial<UserProfile>
-  ) => {
+  ): Promise<boolean> => {
     setLoading(true);
     setError(null);
     try {
       const userRef = doc(db, "users", uid);
       await updateDoc(userRef, updates);
-      setProfile((prev) => (prev ? { ...prev, ...updates } : null));
+      setProfile((prev) => (prev ? { ...prev, ...updates } : null)); // Optimistic update
       console.log("User profile updated:", updates);
       return true;
     } catch (err) {
