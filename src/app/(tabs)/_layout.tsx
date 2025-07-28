@@ -25,13 +25,13 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="events/index"
         options={{
-          title: "", // Remove title to hide the label
+          title: "",
           tabBarIcon: ({ focused }) => (
             <Image
               source={
                 focused
-                  ? require("../../assets/tab 1.png") // Active icon
-                  : require("../../assets/tab 1.png") // Inactive icon (if you have separate active/inactive images, use them here)
+                  ? require("../../assets/tab 1.png")
+                  : require("../../assets/tab 1.png")
               }
               style={{ width: 24, height: 24 }}
             />
@@ -42,7 +42,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="search/index"
         options={{
-          title: "", // Remove title to hide the label
+          title: "",
           tabBarIcon: ({ focused }) => (
             <Image
               source={
@@ -59,7 +59,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="calendar/index"
         options={{
-          title: "", // Remove title to hide the label
+          title: "",
           tabBarIcon: ({ focused }) => (
             <Image
               source={
@@ -76,7 +76,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="favourites/index"
         options={{
-          title: "", // Remove title to hide the label
+          title: "",
           tabBarIcon: ({ focused }) => (
             <Image
               source={
@@ -91,9 +91,9 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile/index"
+        name="profile"
         options={{
-          title: "", // Remove title to hide the label
+          title: "",
           tabBarIcon: ({ focused }) => (
             <Image
               source={
