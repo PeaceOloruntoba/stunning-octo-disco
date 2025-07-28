@@ -5,6 +5,7 @@ import { db } from "../config/firebase";
 import { User } from "firebase/auth";
 
 export interface UserProfile {
+  favoriteEventIds: any[];
   uid: string;
   email: string | null;
   firstName?: string;
@@ -47,6 +48,7 @@ export const useUserProfile = () => {
         gender,
         newsletter,
         datenschutzAccepted,
+        favoriteEventIds: []
       };
       await setDoc(userRef, newProfile, { merge: true }); // Use merge to avoid overwriting existing fields
       setProfile(newProfile);
