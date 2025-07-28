@@ -130,8 +130,6 @@ export default function SignupScreen() {
         <Text className="text-2xl font-bold mb-5 text-gray-800">
           Registriere dich!
         </Text>
-
-        {/* Name Inputs */}
         <View className="flex-row w-full mb-4 space-x-4">
           <TextInput
             className="flex-1 p-3 bg-white rounded-lg border border-gray-300 text-base"
@@ -146,8 +144,6 @@ export default function SignupScreen() {
             onChangeText={setFirstName}
           />
         </View>
-
-        {/* Email Input */}
         <TextInput
           className="w-full p-3 mb-4 bg-white rounded-lg border border-gray-300 text-base"
           placeholder="E-Mail"
@@ -156,8 +152,6 @@ export default function SignupScreen() {
           value={email}
           onChangeText={setEmail}
         />
-
-        {/* Date of Birth Input */}
         <TouchableOpacity
           onPress={() => setShowDatePicker(true)}
           className="w-full p-3 mb-4 bg-white rounded-lg border border-gray-300"
@@ -176,8 +170,6 @@ export default function SignupScreen() {
             maximumDate={new Date()}
           />
         )}
-        {/* On Android, the date picker is a modal, so no extra button is typically needed after selection */}
-        {/* If using 'spinner' on Android, you might need a confirm button, but 'default' is usually better */}
         {Platform.OS === "ios" && showDatePicker && (
           <TouchableOpacity
             onPress={() => setShowDatePicker(false)}
@@ -186,8 +178,6 @@ export default function SignupScreen() {
             <Text className="text-white font-semibold">Datum bestätigen</Text>
           </TouchableOpacity>
         )}
-
-        {/* Geschlecht (Gender) Dropdown */}
         <View className="w-full p-0 mb-4 bg-white rounded-lg border border-gray-300 overflow-hidden">
           <Picker
             selectedValue={gender}
@@ -211,8 +201,6 @@ export default function SignupScreen() {
             />
           </Picker>
         </View>
-
-        {/* Password Inputs */}
         <TextInput
           className="w-full p-3 mb-4 bg-white rounded-lg border border-gray-300 text-base"
           placeholder="Passwort"
@@ -227,12 +215,7 @@ export default function SignupScreen() {
           onChangeText={setConfirmPassword}
           secureTextEntry
         />
-
-        {/* Checkboxes */}
         <View className="flex-col w-full mb-4 space-y-4">
-          {" "}
-          {/* Changed to flex-col and space-y */}
-          {/* Newsletter Checkbox */}
           <View className="p-3 bg-white rounded-lg border border-gray-300 flex-row items-center">
             <Checkbox
               value={newsletter}
@@ -261,15 +244,13 @@ export default function SignupScreen() {
             </View>
           </View>
         </View>
-
-        {/* Error Message */}
-        {(signupError || profileError) && (
-          <Text className="text-red-500 mb-5 text-center">
-            {signupError || profileError}
-          </Text>
-        )}
-
-        {/* Signup Button */}
+        <Text>
+          {(signupError || profileError) && (
+            <Text className="text-red-500 mb-5 text-center">
+              {signupError || profileError}
+            </Text>
+          )}
+        </Text>
         <TouchableOpacity
           className="w-full p-3 bg-blue-500 rounded-lg flex-row justify-center items-center mt-4"
           onPress={handleSignup}
@@ -279,8 +260,6 @@ export default function SignupScreen() {
             {profileLoading ? "Registrieren..." : "Jetzt registrieren"}
           </Text>
         </TouchableOpacity>
-
-        {/* Login Link */}
         <TouchableOpacity
           className="mt-5 mb-10"
           onPress={() => router.push("/(auth)/login")}

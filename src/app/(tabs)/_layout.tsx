@@ -1,14 +1,38 @@
 import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Image, View, Text } from "react-native";
 
 export default function TabsLayout() {
   return (
-    <Tabs>
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: "#007AFF",
+        tabBarInactiveTintColor: "gray",
+        tabBarStyle: {
+          backgroundColor: "#FFFFFF",
+          borderTopWidth: 1,
+          borderTopColor: "#E0E0E0",
+          height: 60,
+          paddingBottom: 5,
+          paddingTop: 5,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+        },
+      }}
+    >
       <Tabs.Screen
         name="events/index"
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+          title: "Events",
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={
+                focused
+                  ? require("../../assets/tab 1.png")
+                  : require("../../assets/tab 1.png")
+              }
+              style={{ width: 24, height: 24 }}
+            />
           ),
           headerShown: false,
         }}
@@ -16,8 +40,16 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="search/index"
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search" size={size} color={color} />
+          title: "Suchen",
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={
+                focused
+                  ? require("../../assets/tab 1.png")
+                  : require("../../assets/tab 1.png")
+              }
+              style={{ width: 24, height: 24 }}
+            />
           ),
           headerShown: false,
         }}
@@ -25,8 +57,16 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="calendar/index"
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar" size={size} color={color} />
+          title: "Kalender",
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={
+                focused
+                  ? require("../../assets/tab 1.png")
+                  : require("../../assets/tab 1.png")
+              }
+              style={{ width: 24, height: 24 }}
+            />
           ),
           headerShown: false,
         }}
@@ -34,8 +74,16 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="car/index"
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="car" size={size} color={color} />
+          title: "Car",
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={
+                focused
+                  ? require("../../assets/tab 1.png")
+                  : require("../../assets/tab 1.png")
+              }
+              style={{ width: 24, height: 24 }}
+            />
           ),
           headerShown: false,
         }}
@@ -43,8 +91,16 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile/index"
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+          title: "Profil",
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={
+                focused
+                  ? require("../../assets/tab 1.png")
+                  : require("../../assets/tab 1.png")
+              }
+              style={{ width: 24, height: 24 }}
+            />
           ),
           headerShown: false,
         }}
