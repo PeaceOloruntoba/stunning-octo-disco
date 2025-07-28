@@ -72,9 +72,9 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="car/index"
+        name="favourites/index"
         options={{
-          title: "Car",
+          title: "Favourites",
           tabBarIcon: ({ focused }) => (
             <Image
               source={
