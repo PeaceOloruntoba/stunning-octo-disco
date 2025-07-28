@@ -1,7 +1,8 @@
 import { initializeApp, FirebaseApp, getApps, getApp } from "firebase/app";
-import { initializeAuth, Auth, getReactNativePersistence } from "firebase/auth"; // <-- This is where it should come from for RN in v10+
+import { initializeAuth, Auth, getReactNativePersistence } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore"; // <-- Add this import
 
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 
 // Define the shape of the Firebase config
@@ -14,13 +15,14 @@ interface FirebaseConfig {
   appId: string;
 }
 
-// Firebase config from .env (ensure these are correctly populated in your app.config.js/app.json extras)
+// Firebase config from .env
 const firebaseConfig: FirebaseConfig = {
   apiKey: Constants.expoConfig.extra.EXPO_PUBLIC_FIREBASE_API_KEY,
   authDomain: Constants.expoConfig.extra.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: Constants.expoConfig.extra.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: Constants.expoConfig.extra.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: Constants.expoConfig.extra.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  messagingSenderId:
+    Constants.expoConfig.extra.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: Constants.expoConfig.extra.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
@@ -34,8 +36,11 @@ if (!getApps().length) {
 
 // Initialize Auth with persistence
 const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage),
 });
 
-export { app, auth };
-export type { FirebaseApp, Auth };
+// Initialize Firestore
+const db = getFirestore(app); // <-- Add this line
+
+export { app, auth, db }; // <-- Export db
+export type { FirebaseApp, Auth, Firestore };
