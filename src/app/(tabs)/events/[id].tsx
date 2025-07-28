@@ -5,55 +5,47 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
-  StyleSheet,
   Dimensions,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import MapView, { Marker } from "react-native-maps";
+import { useEvent, useFavorites } from "../../../hooks/events";
+import { useAuthState } from "../../../hooks/auth";
 
 const { width } = Dimensions.get("window");
-
-const dummyEventDetails = {
-  e1: {
-    id: "e1",
-    clubName: "Cafe Ideal Bar",
-    eventType: "Rock / Party",
-    price: "30 €",
-    distance: "20km",
-    rating: 4.8,
-    reviewCount: 25,
-    image: require("../../../assets/dummy_event.png"),
-    firstDrinkFree: true,
-    locationName: "Musterstraße, 53474 Ahrweiler",
-    latitude: 37.769,
-    longitude: -122.427,
-    conditions: ["Über 18 Jahre alt und 2 Jahre Alkoholherfahrung"],
-    organizerId: "org1",
-  },
-};
 
 export default function EventDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  const event = dummyEventDetails[id as string];
+  const eventId = typeof id === "string" ? id : undefined;
 
-  if (!event) {
-    return (
-      <SafeAreaView className="flex-1 justify-center items-center bg-gray-50 p-5">
-        <Text className="text-xl font-bold text-red-500">
-          Event nicht gefunden!
-        </Text>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="mt-4 px-4 py-2 bg-blue-500 rounded-md"
-        >
-          <Text className="text-white">Zurück</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
+  const { event, loading, error } = useEvent(eventId);
+  const { user } = useAuthState();
+  const {
+    favoriteEventIds,
+    loading: favLoading,
+    toggleFavorite,
+  } = useFavorites(user);
+
+  const isFavorite = eventId ? favoriteEventIds.includes(eventId) : false;
+
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      Alert.alert(
+        "Anmeldung erforderlich",
+        "Bitte melden Sie sich an, um Events zu favorisieren."
+      );
+      router.push("/(auth)/login");
+      return;
+    }
+    if (eventId) {
+      await toggleFavorite(eventId);
+    }
+  };
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -70,20 +62,57 @@ export default function EventDetailsScreen() {
     return <View className="flex-row">{stars}</View>;
   };
 
+  if (loading || favLoading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-100">
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text className="mt-4 text-lg text-gray-700">
+          Eventdetails werden geladen...
+        </Text>
+      </View>
+    );
+  }
+
+  if (error || !event) {
+    return (
+      <SafeAreaView className="flex-1 justify-center items-center bg-gray-50 p-5">
+        <Text className="text-xl font-bold text-red-500">
+          Event nicht gefunden!
+        </Text>
+        <Text className="text-gray-600 mt-2">{error}</Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="mt-4 px-4 py-2 bg-blue-500 rounded-md"
+        >
+          <Text className="text-white">Zurück</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <ScrollView className="flex-1">
-        <Image source={event.image} style={styles.eventImage} />
+      <ScrollView>
+        {/* Event Image */}
+        <Image
+          source={{ uri: event.image }}
+          className="w-full h-80 resize-cover"
+        />
 
-        <View style={styles.headerIcons}>
+        {/* Top Header Icons (Heart and Close) */}
+        <View className="absolute top-12 left-5 right-5 flex-row justify-between items-center z-10">
           <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => console.log("Heart Pressed")}
+            className="bg-white rounded-full p-2 shadow-md"
+            onPress={handleToggleFavorite}
           >
-            <Ionicons name="heart-outline" size={30} color="#FF6347" />
+            <Ionicons
+              name={isFavorite ? "heart" : "heart-outline"}
+              size={30}
+              color={isFavorite ? "#FF6347" : "black"}
+            />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.iconButton}
+            className="bg-white rounded-full p-2 shadow-md"
             onPress={() => router.back()}
           >
             <Ionicons name="close-circle" size={30} color="black" />
@@ -98,6 +127,7 @@ export default function EventDetailsScreen() {
             {event.eventType}
           </Text>
 
+          {/* Price, Distance, Rating */}
           <View className="flex-row items-center justify-between mb-4">
             <Text className="text-2xl font-bold text-gray-800">
               {event.price}
@@ -122,6 +152,7 @@ export default function EventDetailsScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* Event Information */}
           <Text className="text-lg font-semibold text-gray-700 mb-3">
             Eventinformationen
           </Text>
@@ -137,16 +168,20 @@ export default function EventDetailsScreen() {
               </Text>
             </View>
           )}
+          <Text className="text-base text-gray-700 mt-2">
+            {event.description}
+          </Text>
 
+          {/* Standort (Location) */}
           <Text className="text-lg font-semibold text-gray-700 mt-4 mb-3">
             Standort
           </Text>
           <Text className="text-base text-gray-800 mb-2">
             {event.locationName}
           </Text>
-          <View style={styles.smallMapContainer}>
+          <View className="w-full h-52 rounded-md overflow-hidden border border-gray-200 mb-4">
             <MapView
-              style={styles.smallMap}
+              className="absolute inset-0"
               initialRegion={{
                 latitude: event.latitude,
                 longitude: event.longitude,
@@ -165,6 +200,7 @@ export default function EventDetailsScreen() {
             </MapView>
           </View>
 
+          {/* Bedingungen (Conditions) */}
           <Text className="text-lg font-semibold text-gray-700 mt-4 mb-3">
             Bedingungen
           </Text>
@@ -179,6 +215,7 @@ export default function EventDetailsScreen() {
             </View>
           ))}
 
+          {/* Participate Button */}
           <TouchableOpacity className="w-full p-4 bg-black rounded-lg mt-8 mb-20 items-center justify-center">
             <Text className="text-white font-bold text-lg">Teilnehmen</Text>
           </TouchableOpacity>
@@ -187,42 +224,3 @@ export default function EventDetailsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  eventImage: {
-    width: "100%",
-    height: 300,
-    resizeMode: "cover",
-  },
-  headerIcons: {
-    position: "absolute",
-    top: 50,
-    left: 20,
-    right: 20,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  iconButton: {
-    backgroundColor: "white",
-    borderRadius: 50,
-    padding: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  smallMapContainer: {
-    width: "100%",
-    height: 200,
-    borderRadius: 10,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    marginBottom: 10,
-  },
-  smallMap: {
-    ...StyleSheet.absoluteFillObject,
-  },
-});
