@@ -56,7 +56,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="calendar/index"
+        name="calendar"
         options={{
           title: "",
           tabBarIcon: ({ focused }) => (
