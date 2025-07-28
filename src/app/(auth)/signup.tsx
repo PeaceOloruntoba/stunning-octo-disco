@@ -2,7 +2,7 @@ import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import { useState } from "react";
 import { useSignup } from "../../hooks/auth";
 import { useRouter } from "expo-router";
-import CheckBox from "@react-native-community/checkbox";
+import Checkbox from "expo-checkbox";
 
 export default function SignupScreen() {
   const [lastName, setLastName] = useState("");
@@ -55,23 +55,22 @@ export default function SignupScreen() {
         secureTextEntry
       />
       <View className="flex-row w-full mb-4">
-        <View className="flex-1 p-3 bg-white rounded-lg mr-2">
-          <CheckBox
+        <View className="flex-1 p-3 bg-white rounded-lg mr-2 flex-row items-center">
+          <Checkbox
             value={newsletter}
             onValueChange={setNewsletter}
-            tintColors={{ true: "#6b46c1", false: "#a0aec0" }}
-            style={{ marginRight: 8 }} // Add some spacing
+            color={newsletter ? "#6b46c1" : undefined}
           />
-          <Text>Newsletter</Text>
-          <Text>Daten Schutz blab bla bla</Text>
+          <View className="ml-2">
+            <Text>Newsletter</Text>
+            <Text>Daten Schutz blab bla bla</Text>
+          </View>
         </View>
-        <View className="flex-1 p-3 bg-white rounded-lg">
-          <CheckBox
-            value={false}
-            tintColors={{ true: "#6b46c1", false: "#a0aec0" }}
-            style={{ marginRight: 8 }} // Add some spacing
-          />
-          <Text>Daten Schutz blab bla bla</Text>
+        <View className="flex-1 p-3 bg-white rounded-lg flex-row items-center">
+          <Checkbox value={false} color={"#a0aec0"} />
+          <View className="ml-2">
+            <Text>Daten Schutz blab bla bla</Text>
+          </View>
         </View>
       </View>
       {error && <Text className="text-red-500 mb-5">{error}</Text>}

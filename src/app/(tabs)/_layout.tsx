@@ -5,6 +5,15 @@ export default function TabsLayout() {
   return (
     <Tabs>
       <Tabs.Screen
+        name="profile/index"
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person" size={size} color={color} />
+          ),
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
         name="search/index"
         options={{
           tabBarIcon: ({ color, size }) => (
