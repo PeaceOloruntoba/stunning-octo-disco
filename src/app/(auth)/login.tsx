@@ -15,10 +15,10 @@ export default function LoginScreen() {
 
   return (
     <View className="flex-1 bg-gray-100 justify-center items-center p-5">
-      <Text className="text-2xl font-bold mb-5">Hello Again!</Text>
+      <Text className="text-2xl font-bold mb-5">Willkommen bei Eventura</Text>
       <Text className="text-center mb-10">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Amet, urna, a,
-        fusce
+        Finde spontane Events, entdecke neue Orte und gestalte deinen Tag - oder
+        die Nacht.
       </Text>
       <TextInput
         className="w-full p-3 mb-4 bg-white rounded-lg"
@@ -35,9 +35,11 @@ export default function LoginScreen() {
         secureTextEntry
       />
       {error && <Text className="text-red-500 mb-5">{error}</Text>}
-      <Text className="text-blue-500 mb-5">Passwort vergessen?</Text>
+      <View className="w-full mb-5 flex-row justify-end">
+        <Text className="text-black mb-5">Passwort vergessen?</Text>
+      </View>
       <TouchableOpacity
-        className="w-full p-3 bg-purple-500 rounded-lg"
+        className="w-full p-3 bg-[#3B82F6] rounded-lg"
         onPress={handleLogin}
       >
         <Text className="text-white text-center">Login</Text>
@@ -46,8 +48,9 @@ export default function LoginScreen() {
         className="mt-5"
         onPress={() => router.push("/(auth)/signup")}
       >
-        <Text className="text-purple-500">
-          Du hast keine Account? Jetzt Registrieren
+        <Text>
+          Du hast keine Account?
+          <Text className="text-[#3B82F6]">Jetzt Registrieren</Text>
         </Text>
       </TouchableOpacity>
     </View>
