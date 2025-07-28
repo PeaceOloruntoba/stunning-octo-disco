@@ -1,3 +1,4 @@
+// app/(tabs)/events/[id].tsx
 import React from "react";
 import {
   View,
@@ -8,7 +9,8 @@ import {
   Dimensions,
   ActivityIndicator,
   Alert,
-} from "react-native";
+  StyleSheet,
+} from "react-native"; // Import StyleSheet
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -17,6 +19,13 @@ import { useEvent, useFavorites } from "../../../hooks/events";
 import { useAuthState } from "../../../hooks/auth";
 
 const { width } = Dimensions.get("window");
+
+// Define a separate stylesheet for the map to use absoluteFillObject
+const localStyles = StyleSheet.create({
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
+});
 
 export default function EventDetailsScreen() {
   const router = useRouter();
@@ -93,10 +102,13 @@ export default function EventDetailsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <ScrollView>
+        {/* Event Image */}
         <Image
           source={{ uri: event.image }}
           className="w-full h-80 resize-cover"
         />
+
+        {/* Top Header Icons (Heart and Close) */}
         <View className="absolute top-12 left-5 right-5 flex-row justify-between items-center z-10">
           <TouchableOpacity
             className="bg-white rounded-full p-2 shadow-md"
@@ -123,6 +135,8 @@ export default function EventDetailsScreen() {
           <Text className="text-base text-gray-600 mb-4">
             {event.eventType}
           </Text>
+
+          {/* Price, Distance, Rating */}
           <View className="flex-row items-center justify-between mb-4">
             <Text className="text-2xl font-bold text-gray-800">
               {event.price}
@@ -146,6 +160,8 @@ export default function EventDetailsScreen() {
               </View>
             </TouchableOpacity>
           </View>
+
+          {/* Event Information */}
           <Text className="text-lg font-semibold text-gray-700 mb-3">
             Eventinformationen
           </Text>
@@ -164,15 +180,17 @@ export default function EventDetailsScreen() {
           <Text className="text-base text-gray-700 mt-2">
             {event.description}
           </Text>
+
+          {/* Standort (Location) */}
           <Text className="text-lg font-semibold text-gray-700 mt-4 mb-3">
             Standort
           </Text>
           <Text className="text-base text-gray-800 mb-2">
             {event.locationName}
           </Text>
-          <View className="w-full h-52 rounded-md overflow-hidden border border-gray-200 mb-4 flex-1">
+          <View className="w-full h-52 rounded-md overflow-hidden border border-gray-200 mb-4">
             <MapView
-              className="absolute inset-0"
+              style={localStyles.map} // Use the StyleSheet.absoluteFillObject here
               initialRegion={{
                 latitude: event.latitude,
                 longitude: event.longitude,
@@ -182,12 +200,15 @@ export default function EventDetailsScreen() {
               scrollEnabled={false}
               zoomEnabled={false}
             >
-              <Marker
-                coordinate={{
-                  latitude: event.latitude,
-                  longitude: event.longitude,
-                }}
-              />
+              {typeof event.latitude === "number" &&
+                typeof event.longitude === "number" && (
+                  <Marker
+                    coordinate={{
+                      latitude: event.latitude,
+                      longitude: event.longitude,
+                    }}
+                  />
+                )}
             </MapView>
           </View>
 

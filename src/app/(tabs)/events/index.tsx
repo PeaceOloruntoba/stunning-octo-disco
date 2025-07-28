@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -8,6 +7,7 @@ import {
   Image,
   Dimensions,
   ActivityIndicator,
+  StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MapView, { Marker } from "react-native-maps";
@@ -16,6 +16,12 @@ import { useRouter } from "expo-router";
 import { useEvents } from "../../../hooks/events";
 
 const { width } = Dimensions.get("window");
+
+const localStyles = StyleSheet.create({
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
+});
 
 export default function EventsScreen() {
   const router = useRouter();
@@ -42,17 +48,29 @@ export default function EventsScreen() {
     );
   }
 
+  const initialMapRegion =
+    events.length > 0
+      ? {
+          latitude: events[0].latitude,
+          longitude: events[0].longitude,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        }
+      : {
+          latitude: 37.773972, // Default to San Francisco if no events
+          longitude: -122.431297,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        };
+
   return (
     <SafeAreaView className="flex-1">
-      <View className="flex-1">
+      {/* Ensure this parent View explicitly takes full width/height */}
+      <View className="flex-1 w-full h-full">
+        {/* Map View Section */}
         <MapView
-          className="absolute inset-0"
-          initialRegion={{
-            latitude: 37.773972,
-            longitude: -122.431297,
-            latitudeDelta: 0.0922,
-            longitudeDelta: 0.0421,
-          }}
+          style={localStyles.map} // Use the StyleSheet.absoluteFillObject here
+          initialRegion={initialMapRegion}
         >
           {events.map((event) => (
             <Marker
@@ -65,13 +83,14 @@ export default function EventsScreen() {
               description={`${event.price} for ${event.duration}`}
             />
           ))}
-
+          {/* Example blue marker from 1.jpg */}
           <Marker
             coordinate={{ latitude: 37.772, longitude: -122.42 }}
             pinColor="blue"
           />
         </MapView>
 
+        {/* Top Header/Search Bar */}
         <View className="absolute top-12 left-5 right-5 flex-row items-center justify-between bg-white rounded-lg p-3 shadow-md">
           <View className="flex-row items-center mr-2">
             <Ionicons name="location-outline" size={20} color="#333" />
@@ -92,6 +111,7 @@ export default function EventsScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Event List at the Bottom */}
         <View className="absolute bottom-0 w-full pb-3 bg-transparent">
           <Text className="text-base font-bold text-gray-600 self-center mb-3">
             {events.length} Events
