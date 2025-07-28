@@ -1,3 +1,4 @@
+// app/(tabs)/_layout.tsx
 import { Tabs } from "expo-router";
 import { Image, View, Text } from "react-native";
 
@@ -16,20 +17,21 @@ export default function TabsLayout() {
           paddingTop: 5,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 0, // Set font size to 0 to effectively hide the label text
         },
+        tabBarShowLabel: false, // Explicitly hide the label to be safe
       }}
     >
       <Tabs.Screen
         name="events/index"
         options={{
-          title: "Events",
+          title: "", // Remove title to hide the label
           tabBarIcon: ({ focused }) => (
             <Image
               source={
                 focused
-                  ? require("../../assets/tab 1.png")
-                  : require("../../assets/tab 1.png")
+                  ? require("../../assets/tab 1.png") // Active icon
+                  : require("../../assets/tab 1.png") // Inactive icon (if you have separate active/inactive images, use them here)
               }
               style={{ width: 24, height: 24 }}
             />
@@ -40,13 +42,13 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="search/index"
         options={{
-          title: "Suchen",
+          title: "", // Remove title to hide the label
           tabBarIcon: ({ focused }) => (
             <Image
               source={
                 focused
-                  ? require("../../assets/tab 1.png")
-                  : require("../../assets/tab 1.png")
+                  ? require("../../assets/tab 2.png")
+                  : require("../../assets/tab 2.png")
               }
               style={{ width: 24, height: 24 }}
             />
@@ -57,13 +59,13 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="calendar/index"
         options={{
-          title: "Kalender",
+          title: "", // Remove title to hide the label
           tabBarIcon: ({ focused }) => (
             <Image
               source={
                 focused
-                  ? require("../../assets/tab 1.png")
-                  : require("../../assets/tab 1.png")
+                  ? require("../../assets/tab 3.png")
+                  : require("../../assets/tab 3.png")
               }
               style={{ width: 24, height: 24 }}
             />
@@ -74,13 +76,13 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="favourites/index"
         options={{
-          title: "Favourites",
+          title: "", // Remove title to hide the label
           tabBarIcon: ({ focused }) => (
             <Image
               source={
                 focused
-                  ? require("../../assets/tab 1.png")
-                  : require("../../assets/tab 1.png")
+                  ? require("../../assets/tab 4.png")
+                  : require("../../assets/tab 4.png")
               }
               style={{ width: 24, height: 24 }}
             />
@@ -91,13 +93,13 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile/index"
         options={{
-          title: "Profil",
+          title: "", // Remove title to hide the label
           tabBarIcon: ({ focused }) => (
             <Image
               source={
                 focused
-                  ? require("../../assets/tab 1.png")
-                  : require("../../assets/tab 1.png")
+                  ? require("../../assets/tab 5.png")
+                  : require("../../assets/tab 5.png")
               }
               style={{ width: 24, height: 24 }}
             />
