@@ -1,3 +1,4 @@
+// hooks/auth.ts
 import { useState, useEffect } from "react";
 import {
   createUserWithEmailAndPassword,
@@ -5,8 +6,9 @@ import {
   signOut,
   onAuthStateChanged,
   User,
+  UserCredential,
 } from "firebase/auth";
-import { auth } from "../config/firebase"; // Import pre-initialized auth
+import { auth } from "../config/firebase";
 
 // Hook for authentication state
 export const useAuthState = () => {
@@ -27,18 +29,19 @@ export const useAuthState = () => {
 // Hook for signup
 export const useSignup = () => {
   const [error, setError] = useState<string | null>(null);
-  const [signupUserCredential, setSignupUserCredential] = useState<UserCredential | null>(null);
 
-const signup = async (
+  const signup = async (
     email: string,
     password: string,
     confirmPassword: string
-  ): Promise<UserCredential | null> => { // Specify return type
+  ): Promise<{
+    userCredential: UserCredential | null;
+    emailExists: boolean;
+  }> => {
     setError(null);
-    setSignupUserCredential(null); // Clear previous result
     if (password !== confirmPassword) {
       setError("Passwords do not match");
-      return null; // Return null on error
+      return { userCredential: null, emailExists: false };
     }
     try {
       const userCredential = await createUserWithEmailAndPassword(
@@ -47,23 +50,30 @@ const signup = async (
         password
       );
       console.log("Signed up:", userCredential.user);
-      setSignupUserCredential(userCredential); // Store the credential
-      return userCredential; // Return the userCredential on success
-    } catch (err) {
-      setError((err as Error).message);
-      return null; // Return null on error
+      return { userCredential, emailExists: false };
+    } catch (err: any) {
+      if (err.code === "auth/email-already-in-use") {
+        setError(
+          "Diese E-Mail-Adresse ist bereits registriert. Bitte melden Sie sich an."
+        );
+        return { userCredential: null, emailExists: true };
+      }
+      setError(err.message);
+      return { userCredential: null, emailExists: false };
     }
   };
 
-  return { signup, error, signupUserCredential  };
+  return { signup, error };
 };
 
 // Hook for login
 export const useLogin = () => {
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false); // Add loading state
 
   const login = async (email: string, password: string) => {
     setError(null);
+    setLoading(true); // Set loading true
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
@@ -71,12 +81,14 @@ export const useLogin = () => {
         password
       );
       console.log("Logged in:", userCredential.user);
-    } catch (err) {
-      setError((err as Error).message);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false); // Set loading false
     }
   };
 
-  return { login, error };
+  return { login, error, loading }; // Export loading
 };
 
 // Hook for logout
