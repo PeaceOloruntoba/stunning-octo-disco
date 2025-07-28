@@ -1,112 +1,267 @@
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import { useState } from "react";
+// app/(auth)/signup.tsx
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  Platform,
+} from "react-native";
 import { useSignup } from "../../hooks/auth";
 import { useRouter } from "expo-router";
 import Checkbox from "expo-checkbox";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Picker } from "@react-native-picker/picker";
+import { useUserProfile } from "../../hooks/userProfile";
 
 export default function SignupScreen() {
   const [lastName, setLastName] = useState("");
   const [firstName, setFirstName] = useState("");
-  const [alter, setAlter] = useState("");
-  const [geschlecht, setGeschlecht] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [gender, setGender] = useState("prefer_not_to_say");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [newsletter, setNewsletter] = useState(false);
-  const [datenschutz, setDatenschutz] = useState(false);
-  const { signup, error } = useSignup();
+  const [datenschutzAccepted, setDatenschutzAccepted] = useState(false);
+
+  // Destructure `signupUserCredential` from useSignup
+  const { signup, error: signupError } = useSignup();
+  const {
+    createUserProfile,
+    loading: profileLoading,
+    error: profileError,
+  } = useUserProfile();
   const router = useRouter();
 
-  const handleSignup = () => {
-    signup(email, password, confirmPassword);
+  const handleSignup = async () => {
+    if (
+      !lastName ||
+      !firstName ||
+      !email ||
+      !password ||
+      !confirmPassword ||
+      !dateOfBirth ||
+      gender === "prefer_not_to_say" || // Ensure a gender is picked, or allow the default
+      !datenschutzAccepted
+    ) {
+      Alert.alert(
+        "Fehler",
+        "Bitte füllen Sie alle Pflichtfelder aus und akzeptieren Sie die Datenschutzbestimmungen."
+      );
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert("Fehler", "Passwörter stimmen nicht überein.");
+      return;
+    }
+
+    const today = new Date();
+    const minDate = new Date(
+      today.getFullYear() - 16,
+      today.getMonth(),
+      today.getDate()
+    );
+    if (dateOfBirth > minDate) {
+      Alert.alert(
+        "Fehler",
+        "Sie müssen mindestens 16 Jahre alt sein, um sich zu registrieren."
+      );
+      return;
+    }
+
+    // Call the signup function and await its result
+    const userCredential = await signup(email, password, confirmPassword);
+
+    if (userCredential && userCredential.user) {
+      // Check if userCredential and user are present
+      const profileCreated = await createUserProfile(
+        userCredential.user, // <<< PASS THE USER OBJECT HERE!
+        firstName,
+        lastName,
+        dateOfBirth,
+        gender,
+        newsletter,
+        datenschutzAccepted
+      );
+
+      if (profileCreated) {
+        Alert.alert("Erfolg", "Konto erfolgreich erstellt!");
+        router.replace("/preferences"); // Redirect to preferences page
+      } else if (profileError) {
+        Alert.alert(
+          "Fehler beim Profil",
+          `Profil konnte nicht erstellt werden: ${profileError}`
+        );
+      }
+    } else if (signupError) {
+      // If userCredential is null, it means there was a signup error
+      Alert.alert("Registrierungsfehler", signupError);
+    }
+  };
+
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    const currentDate = selectedDate || dateOfBirth;
+    setShowDatePicker(Platform.OS === "ios");
+    setDateOfBirth(currentDate);
   };
 
   return (
     <View className="flex-1 bg-gray-100 justify-center items-center p-5">
-      <Text className="text-2xl font-bold mb-5">Registriere dich!</Text>
-      <View className="flex-row w-full mb-4 gap-4">
+      <Text className="text-2xl font-bold mb-5 text-gray-800">
+        Registriere dich!
+      </Text>
+
+      {/* Name Inputs */}
+      <View className="flex-row w-full mb-4 space-x-4">
         <TextInput
-          className="flex-1 p-3 bg-white rounded-lg"
+          className="flex-1 p-3 bg-white rounded-lg border border-gray-300 text-base"
           placeholder="Nachname"
           value={lastName}
           onChangeText={setLastName}
         />
         <TextInput
-          className="flex-1 p-3 bg-white rounded-lg"
+          className="flex-1 p-3 bg-white rounded-lg border border-gray-300 text-base"
           placeholder="Vorname"
           value={firstName}
           onChangeText={setFirstName}
         />
       </View>
+
+      {/* Email Input */}
       <TextInput
-        className="w-full p-3 mb-4 bg-white rounded-lg"
+        className="w-full p-3 mb-4 bg-white rounded-lg border border-gray-300 text-base"
         placeholder="E-Mail"
+        keyboardType="email-address"
+        autoCapitalize="none"
         value={email}
         onChangeText={setEmail}
-        autoCapitalize="none"
       />
+
+      {/* Date of Birth Input */}
+      <TouchableOpacity
+        onPress={() => setShowDatePicker(true)}
+        className="w-full p-3 mb-4 bg-white rounded-lg border border-gray-300"
+      >
+        <Text className="text-base text-gray-700">
+          Geburtsdatum: {dateOfBirth.toLocaleDateString()}
+        </Text>
+      </TouchableOpacity>
+      {showDatePicker && (
+        <DateTimePicker
+          testID="dateTimePicker"
+          value={dateOfBirth}
+          mode="date"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={onDateChange}
+          maximumDate={new Date()}
+        />
+      )}
+      {Platform.OS === "android" && showDatePicker && (
+        <TouchableOpacity
+          onPress={() => setShowDatePicker(false)}
+          className="px-4 py-2 bg-blue-500 rounded-md mb-4"
+        >
+          <Text className="text-white font-semibold">Datum bestätigen</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Geschlecht (Gender) Dropdown */}
+      <View className="w-full p-0 mb-4 bg-white rounded-lg border border-gray-300 overflow-hidden">
+        <Picker
+          selectedValue={gender}
+          onValueChange={(itemValue, itemIndex) => setGender(String(itemValue))}
+          style={{ height: 50, width: "100%" }}
+        >
+          <Picker.Item
+            label="Geschlecht auswählen"
+            value="prefer_not_to_say"
+            enabled={false}
+            style={{ color: "gray" }}
+          />
+          <Picker.Item label="Männlich" value="male" />
+          <Picker.Item label="Weiblich" value="female" />
+          <Picker.Item
+            label="Möchte ich nicht angeben"
+            value="prefer_not_to_say"
+          />
+        </Picker>
+      </View>
+
+      {/* Password Inputs */}
       <TextInput
-        className="w-full p-3 mb-4 bg-white rounded-lg"
-        placeholder="Alter"
-        value={alter}
-        onChangeText={setAlter}
-      />
-      <TextInput
-        className="w-full p-3 mb-4 bg-white rounded-lg"
-        placeholder="Geschlecht"
-        value={geschlecht}
-        onChangeText={setGeschlecht}
-      />
-      <TextInput
-        className="w-full p-3 mb-4 bg-white rounded-lg"
+        className="w-full p-3 mb-4 bg-white rounded-lg border border-gray-300 text-base"
         placeholder="Passwort"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
       <TextInput
-        className="w-full p-3 mb-4 bg-white rounded-lg"
+        className="w-full p-3 mb-4 bg-white rounded-lg border border-gray-300 text-base"
         placeholder="Passwort wiederholen"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
       />
-      <View className="flex-row w-full mb-4">
-        <View className="flex-1 p-3 bg-white rounded-lg mr-2 flex-row items-center">
+
+      {/* Checkboxes */}
+      <View className="flex-row w-full mb-4 space-x-4">
+        {/* Newsletter Checkbox */}
+        <View className="flex-1 p-3 bg-white rounded-lg border border-gray-300 flex-row items-center">
           <Checkbox
             value={newsletter}
             onValueChange={setNewsletter}
             color={newsletter ? "#3B82F6" : undefined}
+            className="mr-2"
           />
-          <View className="ml-2">
-            <Text>Newsletter</Text>
-            <Text>Checkbox</Text>
+          <View className="flex-1">
+            <Text className="text-sm text-gray-700">Newsletter abonnieren</Text>
           </View>
         </View>
-        <View className="flex-1 p-3 bg-white rounded-lg mr-2 flex-row items-center">
+
+        {/* Datenschutz Checkbox */}
+        <View className="flex-1 p-3 bg-white rounded-lg border border-gray-300 flex-row items-center">
           <Checkbox
-            value={datenschutz}
-            onValueChange={setDatenschutz}
-            color={datenschutz ? "#3B82F6" : undefined}
+            value={datenschutzAccepted}
+            onValueChange={setDatenschutzAccepted}
+            color={datenschutzAccepted ? "#3B82F6" : undefined}
+            className="mr-2"
           />
-          <View className="ml-2">
-            <Text>Datenschutz</Text>
-            <Text>Checkbox</Text>
+          <View className="flex-1">
+            <Text className="text-sm text-gray-700">
+              Datenschutzbestimmungen akzeptieren
+            </Text>
           </View>
         </View>
       </View>
-      {error && <Text className="text-red-500 mb-5">{error}</Text>}
+
+      {/* Error Message */}
+      {(signupError || profileError) && (
+        <Text className="text-red-500 mb-5 text-center">
+          {signupError || profileError}
+        </Text>
+      )}
+
+      {/* Signup Button */}
       <TouchableOpacity
-        className="w-full p-3 bg-[#3B82F6] rounded-lg"
+        className="w-full p-3 bg-blue-500 rounded-lg flex-row justify-center items-center"
         onPress={handleSignup}
+        disabled={profileLoading || !!signupError} // Disable on signup error too
       >
-        <Text className="text-white text-center">Jetzt registrieren</Text>
+        <Text className="text-white text-center font-bold text-lg">
+          {profileLoading ? "Registrieren..." : "Jetzt registrieren"}
+        </Text>
       </TouchableOpacity>
+
+      {/* Login Link */}
       <TouchableOpacity
         className="mt-5"
         onPress={() => router.push("/(auth)/login")}
       >
-        <Text className="text-[#3B82F6]">
+        <Text className="text-blue-500 text-base">
           Bereits ein Account? Jetzt einloggen
         </Text>
       </TouchableOpacity>

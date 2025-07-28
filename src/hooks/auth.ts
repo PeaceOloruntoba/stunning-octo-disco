@@ -27,16 +27,18 @@ export const useAuthState = () => {
 // Hook for signup
 export const useSignup = () => {
   const [error, setError] = useState<string | null>(null);
+  const [signupUserCredential, setSignupUserCredential] = useState<UserCredential | null>(null);
 
-  const signup = async (
+const signup = async (
     email: string,
     password: string,
     confirmPassword: string
-  ) => {
+  ): Promise<UserCredential | null> => { // Specify return type
     setError(null);
+    setSignupUserCredential(null); // Clear previous result
     if (password !== confirmPassword) {
       setError("Passwords do not match");
-      return;
+      return null; // Return null on error
     }
     try {
       const userCredential = await createUserWithEmailAndPassword(
@@ -45,12 +47,15 @@ export const useSignup = () => {
         password
       );
       console.log("Signed up:", userCredential.user);
+      setSignupUserCredential(userCredential); // Store the credential
+      return userCredential; // Return the userCredential on success
     } catch (err) {
       setError((err as Error).message);
+      return null; // Return null on error
     }
   };
 
-  return { signup, error };
+  return { signup, error, signupUserCredential  };
 };
 
 // Hook for login
