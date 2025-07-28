@@ -1,4 +1,3 @@
-// app/(tabs)/_layout.tsx
 import { Tabs } from "expo-router";
 import { Image, View, Text } from "react-native";
 
@@ -17,9 +16,9 @@ export default function TabsLayout() {
           paddingTop: 5,
         },
         tabBarLabelStyle: {
-          fontSize: 0, // Set font size to 0 to effectively hide the label text
+          fontSize: 0,
         },
-        tabBarShowLabel: false, // Explicitly hide the label to be safe
+        tabBarShowLabel: false,
       }}
     >
       <Tabs.Screen
