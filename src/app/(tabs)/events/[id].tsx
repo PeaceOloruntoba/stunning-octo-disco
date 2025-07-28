@@ -93,13 +93,10 @@ export default function EventDetailsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <ScrollView>
-        {/* Event Image */}
         <Image
           source={{ uri: event.image }}
           className="w-full h-80 resize-cover"
         />
-
-        {/* Top Header Icons (Heart and Close) */}
         <View className="absolute top-12 left-5 right-5 flex-row justify-between items-center z-10">
           <TouchableOpacity
             className="bg-white rounded-full p-2 shadow-md"
@@ -126,8 +123,6 @@ export default function EventDetailsScreen() {
           <Text className="text-base text-gray-600 mb-4">
             {event.eventType}
           </Text>
-
-          {/* Price, Distance, Rating */}
           <View className="flex-row items-center justify-between mb-4">
             <Text className="text-2xl font-bold text-gray-800">
               {event.price}
@@ -151,8 +146,6 @@ export default function EventDetailsScreen() {
               </View>
             </TouchableOpacity>
           </View>
-
-          {/* Event Information */}
           <Text className="text-lg font-semibold text-gray-700 mb-3">
             Eventinformationen
           </Text>
@@ -171,15 +164,13 @@ export default function EventDetailsScreen() {
           <Text className="text-base text-gray-700 mt-2">
             {event.description}
           </Text>
-
-          {/* Standort (Location) */}
           <Text className="text-lg font-semibold text-gray-700 mt-4 mb-3">
             Standort
           </Text>
           <Text className="text-base text-gray-800 mb-2">
             {event.locationName}
           </Text>
-          <View className="w-full h-52 rounded-md overflow-hidden border border-gray-200 mb-4">
+          <View className="w-full h-52 rounded-md overflow-hidden border border-gray-200 mb-4 flex-1">
             <MapView
               className="absolute inset-0"
               initialRegion={{

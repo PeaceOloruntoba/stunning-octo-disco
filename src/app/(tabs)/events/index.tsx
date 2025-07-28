@@ -1,4 +1,4 @@
-// app/(tabs)/events/index.tsx
+
 import React, { useState } from "react";
 import {
   View,
@@ -45,11 +45,10 @@ export default function EventsScreen() {
   return (
     <SafeAreaView className="flex-1">
       <View className="flex-1">
-        {/* Map View Section */}
         <MapView
-          className="absolute inset-0" // Equivalent to StyleSheet.absoluteFillObject
+          className="absolute inset-0"
           initialRegion={{
-            latitude: 37.773972, // Centered around San Francisco, as in 1.jpg
+            latitude: 37.773972,
             longitude: -122.431297,
             latitudeDelta: 0.0922,
             longitudeDelta: 0.0421,
@@ -66,14 +65,13 @@ export default function EventsScreen() {
               description={`${event.price} for ${event.duration}`}
             />
           ))}
-          {/* Example blue marker from 1.jpg */}
+
           <Marker
             coordinate={{ latitude: 37.772, longitude: -122.42 }}
             pinColor="blue"
           />
         </MapView>
 
-        {/* Top Header/Search Bar */}
         <View className="absolute top-12 left-5 right-5 flex-row items-center justify-between bg-white rounded-lg p-3 shadow-md">
           <View className="flex-row items-center mr-2">
             <Ionicons name="location-outline" size={20} color="#333" />
@@ -94,7 +92,6 @@ export default function EventsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Event List at the Bottom */}
         <View className="absolute bottom-0 w-full pb-3 bg-transparent">
           <Text className="text-base font-bold text-gray-600 self-center mb-3">
             {events.length} Events
@@ -102,12 +99,12 @@ export default function EventsScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 10 }} // Only this one needs inline style due to contentContainerStyle prop
+            contentContainerStyle={{ paddingHorizontal: 10 }}
           >
             {events.map((event) => (
               <TouchableOpacity
                 key={event.id}
-                className="w-72 bg-white rounded-lg mx-2 shadow-md overflow-hidden" // w-72 for width: 18rem (288px)
+                className="w-72 bg-white rounded-lg mx-2 shadow-md overflow-hidden"
                 onPress={() => router.push(`/events/${event.id}`)}
               >
                 <Image
