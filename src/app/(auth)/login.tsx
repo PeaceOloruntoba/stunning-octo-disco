@@ -42,17 +42,6 @@ export default function LoginScreen() {
       >
         <Text className="text-white text-center">Login</Text>
       </TouchableOpacity>
-      <View className="flex-row justify-center mt-5">
-        <TouchableOpacity className="p-3 bg-white mr-2 rounded-lg">
-          <Text>f</Text> {/* Facebook icon */}
-        </TouchableOpacity>
-        <TouchableOpacity className="p-3 bg-white mr-2 rounded-lg">
-          <Text>G</Text> {/* Google icon */}
-        </TouchableOpacity>
-        <TouchableOpacity className="p-3 bg-white rounded-lg">
-          <Text>A</Text> {/* Apple icon */}
-        </TouchableOpacity>
-      </View>
       <TouchableOpacity
         className="mt-5"
         onPress={() => router.push("/(auth)/signup")}

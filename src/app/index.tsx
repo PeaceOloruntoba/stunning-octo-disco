@@ -11,6 +11,8 @@ export default function LandingPage() {
         className="w-3/4 h-1/3 mb-10"
         resizeMode="contain"
       />
+      <Text>Hello World!</Text>
+      <Text>Welcome to Eventura!</Text>
       <TouchableOpacity className="flex-row w-3/4">
         <TouchableOpacity
           className="flex-1 bg-blue-500 p-8 rounded-l-lg"
