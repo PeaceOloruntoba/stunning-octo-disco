@@ -1,10 +1,12 @@
+const { version } = require("react");
+
 module.exports = ({ config }) => {
   const plugins = config.plugins || [];
 
   return {
     ...config,
-    name: "stunning-octo-disco",
-    slug: "stunning-octo-disco",
+    name: "eventura",
+    slug: "eventura",
     scheme: "acme",
     userInterfaceStyle: "automatic",
     orientation: "default",
@@ -35,8 +37,15 @@ module.exports = ({ config }) => {
         process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 
       eas: {
-        projectId: process.env.EAS_PROJECT_ID || "YOUR_EAS_PROJECT_ID",
+        projectId: "3aa5679f-bcde-48b9-b88f-ccd5b4a5afc5",
       },
+    },
+    cli: {
+      appVersionSource: "remote"
+    },
+    android: {
+      package: "com.eventura.app",
+      versionCode: 1,
     },
   };
 };
