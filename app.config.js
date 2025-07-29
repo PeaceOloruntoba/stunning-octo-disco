@@ -45,6 +45,7 @@ module.exports = ({ config }) => {
         process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
       EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY:
         process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+      EXPO_PUBLIC_STRIPE_SECRET_KEY: process.env.EXPO_PUBLIC_STRIPE_SECRET_KEY,
       eas: {
         projectId: "3aa5679f-bcde-48b9-b88f-ccd5b4a5afc5",
       },
