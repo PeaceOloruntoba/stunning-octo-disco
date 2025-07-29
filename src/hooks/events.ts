@@ -1,4 +1,3 @@
-// hooks/events.ts
 import { useState, useEffect } from "react";
 import {
   collection,
@@ -14,9 +13,8 @@ import {
 } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { User } from "firebase/auth";
-import { UserProfile } from "./userProfile"; // Import UserProfile interface
+import { UserProfile } from "./userProfile";
 
-// --- Event Data Interface ---
 export interface Event {
   id: string;
   clubName: string;
@@ -26,7 +24,7 @@ export interface Event {
   distance: string;
   rating: number;
   reviewCount: number;
-  image: string; // URL or path to image
+  image: string;
   firstDrinkFree: boolean;
   locationName: string;
   latitude: number;
@@ -34,41 +32,42 @@ export interface Event {
   conditions: string[];
   organizerId: string;
   description: string;
-  eventDate: string; // NEW: ISO date string for the event
+  eventDate: string;
 }
 
-// --- Review Data Interface (No change) ---
 export interface Review {
   id: string;
   userId: string;
   userName: string;
   userProfilePic: string;
-  rating: number; // 1-5 stars
+  rating: number;
   comment: string;
-  timestamp: string; // ISO string
+  timestamp: string;
 }
 
-// --- Organizer Data Interface (No change) ---
 export interface Organizer {
   id: string;
   name: string;
-  rating: number; // Overall rating
+  rating: number;
   reviewCount: number;
-  profilePic: string; // URL or path to image
-  reviews: Review[]; // Array of reviews for this organizer
+  profilePic: string;
+  reviews: Review[];
 }
 
-// --- Participated Event Interface (NEW) ---
+export interface PaymentDetails {
+  paymentId: string;
+  amount: number;
+  currency: string;
+  status: string;
+}
+
 export interface ParticipatedEvent {
   eventId: string;
-  status: "upcoming" | "completed" | "cancelled"; // E.g., for calendar display
-  participationDate: string; // When the user "participated" (e.g., paid)
-  // You might add payment details here later
+  status: "upcoming" | "completed" | "cancelled";
+  participationDate: string;
+  paymentDetails?: PaymentDetails;
 }
 
-// --- Hooks for Events (No change to useEvents, useEvent) ---
-
-// Hook to fetch all events
 export const useEvents = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +84,7 @@ export const useEvents = () => {
         const fetchedEvents: Event[] = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        })) as Event[]; // Cast to Event[]
+        })) as Event[];
         setEvents(fetchedEvents);
         setLoading(false);
       },
@@ -96,13 +95,12 @@ export const useEvents = () => {
       }
     );
 
-    return () => unsubscribe(); // Clean up listener
+    return () => unsubscribe();
   }, []);
 
   return { events, loading, error };
 };
 
-// Hook to fetch a single event by ID
 export const useEvent = (eventId: string | string[] | undefined) => {
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
@@ -137,13 +135,12 @@ export const useEvent = (eventId: string | string[] | undefined) => {
       }
     );
 
-    return () => unsubscribe(); // Clean up listener
+    return () => unsubscribe();
   }, [eventId]);
 
   return { event, loading, error };
 };
 
-// Hook to fetch a single organizer by ID (No change)
 export const useOrganizer = (organizerId: string | string[] | undefined) => {
   const [organizer, setOrganizer] = useState<Organizer | null>(null);
   const [loading, setLoading] = useState(true);
@@ -178,13 +175,11 @@ export const useOrganizer = (organizerId: string | string[] | undefined) => {
       }
     );
 
-    return () => unsubscribe(); // Clean up listener
+    return () => unsubscribe();
   }, [organizerId]);
 
   return { organizer, loading, error };
 };
-
-// --- Hooks for Favorites (No change) ---
 
 export const useFavorites = (user: User | null) => {
   const [favoriteEventIds, setFavoriteEventIds] = useState<string[]>([]);
@@ -258,7 +253,6 @@ export const useFavorites = (user: User | null) => {
   return { favoriteEventIds, loading, error, toggleFavorite };
 };
 
-// Hook to add a review to an organizer (No change)
 export const useAddReview = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -296,8 +290,6 @@ export const useAddReview = () => {
 
   return { addReview, loading, error, success };
 };
-
-// --- Hooks for Participated Events (NEW) ---
 
 export const useParticipatedEvents = (user: User | null) => {
   const [participatedEvents, setParticipatedEvents] = useState<
@@ -340,7 +332,8 @@ export const useParticipatedEvents = (user: User | null) => {
 
   const addParticipatedEvent = async (
     eventId: string,
-    status: "upcoming" | "completed" | "cancelled" = "upcoming"
+    status: "upcoming" | "completed" | "cancelled" = "upcoming",
+    paymentDetails?: PaymentDetails
   ) => {
     if (!user) {
       setError("User not logged in to manage participated events.");
@@ -353,6 +346,7 @@ export const useParticipatedEvents = (user: User | null) => {
         eventId,
         status,
         participationDate: new Date().toISOString(),
+        paymentDetails,
       };
 
       await updateDoc(userDocRef, {

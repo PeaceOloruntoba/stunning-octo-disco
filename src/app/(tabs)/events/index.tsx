@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,12 +8,14 @@ import {
   Dimensions,
   ActivityIndicator,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MapView, { Marker } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEvents } from "../../../hooks/events";
+import * as Location from "expo-location";
 
 const { width } = Dimensions.get("window");
 
@@ -26,13 +28,33 @@ const localStyles = StyleSheet.create({
 export default function EventsScreen() {
   const router = useRouter();
   const { events, loading, error } = useEvents();
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
-  if (loading) {
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Fehler", "Standortzugriff verweigert.");
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setUserLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+    })();
+  }, []);
+
+  if (loading || !userLocation) {
     return (
       <View className="flex-1 justify-center items-center bg-gray-100">
         <ActivityIndicator size="large" color="#0000ff" />
         <Text className="mt-4 text-lg text-gray-700">
-          Events werden geladen...
+          Events oder Standort werden geladen...
         </Text>
       </View>
     );
@@ -48,30 +70,31 @@ export default function EventsScreen() {
     );
   }
 
-  const initialMapRegion =
-    events.length > 0
-      ? {
-          latitude: events[0].latitude,
-          longitude: events[0].longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        }
-      : {
-          latitude: 37.773972, // Default to San Francisco if no events
-          longitude: -122.431297,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        };
+  const initialMapRegion = userLocation
+    ? {
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      }
+    : {
+        latitude: 37.773972,
+        longitude: -122.431297,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      };
 
   return (
     <SafeAreaView className="flex-1">
-      {/* Ensure this parent View explicitly takes full width/height */}
       <View className="flex-1 w-full h-full">
-        {/* Map View Section */}
-        <MapView
-          style={localStyles.map} // Use the StyleSheet.absoluteFillObject here
-          initialRegion={initialMapRegion}
-        >
+        <MapView style={localStyles.map} initialRegion={initialMapRegion}>
+          {userLocation && (
+            <Marker
+              coordinate={userLocation}
+              title="Ihr Standort"
+              pinColor="blue"
+            />
+          )}
           {events.map((event) => (
             <Marker
               key={event.id}
@@ -80,17 +103,10 @@ export default function EventsScreen() {
                 longitude: event.longitude,
               }}
               title={event.clubName}
-              description={`${event.price} for ${event.duration}`}
+              description={`${event.price} für ${event.duration}`}
             />
           ))}
-          {/* Example blue marker from 1.jpg */}
-          <Marker
-            coordinate={{ latitude: 37.772, longitude: -122.42 }}
-            pinColor="blue"
-          />
         </MapView>
-
-        {/* Top Header/Search Bar */}
         <View className="absolute top-12 left-5 right-5 flex-row items-center justify-between bg-white rounded-lg p-3 shadow-md">
           <View className="flex-row items-center mr-2">
             <Ionicons name="location-outline" size={20} color="#333" />
@@ -110,8 +126,6 @@ export default function EventsScreen() {
             <Ionicons name="filter-outline" size={24} color="white" />
           </TouchableOpacity>
         </View>
-
-        {/* Event List at the Bottom */}
         <View className="absolute bottom-0 w-full pb-3 bg-transparent">
           <Text className="text-base font-bold text-gray-600 self-center mb-3">
             {events.length} Events

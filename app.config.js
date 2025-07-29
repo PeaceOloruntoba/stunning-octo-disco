@@ -20,6 +20,7 @@ module.exports = ({ config }) => {
           origin: "https://n",
         },
       ],
+      "expo-location",
       ...plugins,
     ],
     extra: {
@@ -35,17 +36,18 @@ module.exports = ({ config }) => {
       EXPO_PUBLIC_FIREBASE_APP_ID: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
       EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID:
         process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
-
       eas: {
         projectId: "3aa5679f-bcde-48b9-b88f-ccd5b4a5afc5",
       },
     },
     cli: {
-      appVersionSource: "remote"
+      appVersionSource: "remote",
     },
     android: {
       package: "com.eventura.app",
       versionCode: 1,
+      permissions: ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      googleServicesFile: "./google-services.json",
     },
   };
 };
