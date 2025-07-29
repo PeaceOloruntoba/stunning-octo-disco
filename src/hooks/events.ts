@@ -410,3 +410,19 @@ export const useParticipatedEvents = (user: User | null) => {
     updateParticipatedEventStatus,
   };
 };
+
+export const checkPaymentExists = async (userId: string, eventId: string) => {
+  try {
+    const paymentsQuery = query(
+      collection(db, "payments"),
+      where("userId", "==", userId),
+      where("eventId", "==", eventId),
+      where("status", "==", "succeeded")
+    );
+    const querySnapshot = await getDocs(paymentsQuery);
+    return !querySnapshot.empty;
+  } catch (err) {
+    console.error("Error checking payment existence:", err);
+    return false;
+  }
+};

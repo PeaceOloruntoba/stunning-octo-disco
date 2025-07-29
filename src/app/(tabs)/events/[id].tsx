@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -18,9 +18,13 @@ import {
   useEvent,
   useFavorites,
   useParticipatedEvents,
+  checkPaymentExists,
 } from "../../../hooks/events";
 import { useAuthState } from "../../../hooks/auth";
 import { StripeProvider, usePaymentSheet } from "@stripe/stripe-react-native";
+import { loadStripe } from "@stripe/stripe-js";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../../../config/firebase";
 
 const { width } = Dimensions.get("window");
 
@@ -29,6 +33,9 @@ const localStyles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
 });
+
+// Initialize Stripe.js with your secret key (FOR EDUCATIONAL PURPOSES ONLY)
+const stripePromise = loadStripe("[your-stripe-publishable-key]");
 
 export default function EventDetailsScreen() {
   const router = useRouter();
@@ -45,11 +52,24 @@ export default function EventDetailsScreen() {
     addParticipatedEvent,
     loading: participateLoading,
     error: participateError,
+    participatedEvents,
   } = useParticipatedEvents(user);
   const { initPaymentSheet, presentPaymentSheet } = usePaymentSheet();
   const [mapExpanded, setMapExpanded] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [hasPaid, setHasPaid] = useState(false);
 
   const isFavorite = eventId ? favoriteEventIds.includes(eventId) : false;
+
+  useEffect(() => {
+    const checkIfPaid = async () => {
+      if (user && eventId) {
+        const paid = await checkPaymentExists(user.uid, eventId);
+        setHasPaid(paid);
+      }
+    };
+    checkIfPaid();
+  }, [user, eventId]);
 
   const handleToggleFavorite = async () => {
     if (!user) {
@@ -76,6 +96,14 @@ export default function EventDetailsScreen() {
     }
     if (!eventId || !event) return;
 
+    if (hasPaid || participatedEvents.some((pe) => pe.eventId === eventId)) {
+      Alert.alert(
+        "Fehler",
+        "Du hast bereits für dieses Event bezahlt oder bist bereits teilnehmend."
+      );
+      return;
+    }
+
     Alert.alert(
       "Zahlung für Event",
       `Möchtest du für "${event.clubName}" teilnehmen? Preis: ${event.price}`,
@@ -87,24 +115,34 @@ export default function EventDetailsScreen() {
         {
           text: "Bezahlen",
           onPress: async () => {
+            setPaymentLoading(true);
             try {
-              // Fetch Payment Intent client secret from your backend
+              // Create Payment Intent in frontend (FOR EDUCATIONAL PURPOSES ONLY)
+              const stripe = await stripePromise;
+              if (!stripe) {
+                throw new Error("Stripe.js konnte nicht initialisiert werden.");
+              }
+
+              const amount = Math.round(
+                parseFloat(event.price.replace(/[^0-9.]/g, "")) * 100
+              ); // Convert to cents
               const response = await fetch(
-                "https://your-backend.com/create-payment-intent",
+                "https://api.stripe.com/v1/payment_intents",
                 {
                   method: "POST",
                   headers: {
-                    "Content-Type": "application/json",
+                    Authorization: `Bearer [your-stripe-secret-key]`, // INSECURE: DO NOT USE IN PRODUCTION
+                    "Content-Type": "application/x-www-form-urlencoded",
                   },
-                  body: JSON.stringify({
-                    amount:
-                      parseFloat(event.price.replace(/[^0-9.]/g, "")) * 100, // Convert price to cents
+                  body: new URLSearchParams({
+                    amount: amount.toString(),
                     currency: "eur",
-                    eventId,
-                  }),
+                    payment_method_types: "card",
+                  }).toString(),
                 }
               );
-              const { clientSecret } = await response.json();
+
+              const { client_secret: clientSecret } = await response.json();
 
               if (!clientSecret) {
                 Alert.alert(
@@ -139,10 +177,22 @@ export default function EventDetailsScreen() {
                 return;
               }
 
-              // Payment successful, add to participated events
+              // Store payment details in Firebase
+              const paymentDocRef = doc(db, "payments", clientSecret);
+              await setDoc(paymentDocRef, {
+                paymentId: clientSecret,
+                userId: user.uid,
+                eventId,
+                amount: amount / 100, // Store in euros
+                currency: "eur",
+                status: "succeeded",
+                timestamp: new Date().toISOString(),
+              });
+
+              // Add to participated events
               const success = await addParticipatedEvent(eventId, "upcoming", {
                 paymentId: clientSecret,
-                amount: parseFloat(event.price.replace(/[^0-9.]/g, "")),
+                amount: amount / 100,
                 currency: "eur",
                 status: "succeeded",
               });
@@ -165,6 +215,8 @@ export default function EventDetailsScreen() {
                 "Fehler",
                 `Zahlungsprozess fehlgeschlagen: ${(err as Error).message}`
               );
+            } finally {
+              setPaymentLoading(false);
             }
           },
         },
@@ -191,7 +243,7 @@ export default function EventDetailsScreen() {
     setMapExpanded(!mapExpanded);
   };
 
-  if (loading || favLoading || participateLoading) {
+  if (loading || favLoading || participateLoading || paymentLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-gray-100">
         <ActivityIndicator size="large" color="#0000ff" />
@@ -356,12 +408,14 @@ export default function EventDetailsScreen() {
             <TouchableOpacity
               className="w-full p-4 bg-black rounded-lg mt-8 mb-20 items-center justify-center"
               onPress={handleParticipate}
-              disabled={participateLoading}
+              disabled={participateLoading || paymentLoading || hasPaid}
             >
-              {participateLoading ? (
+              {participateLoading || paymentLoading ? (
                 <ActivityIndicator color="white" />
               ) : (
-                <Text className="text-white font-bold text-lg">Teilnehmen</Text>
+                <Text className="text-white font-bold text-lg">
+                  {hasPaid ? "Bereits bezahlt" : "Teilnehmen"}
+                </Text>
               )}
             </TouchableOpacity>
           </View>
