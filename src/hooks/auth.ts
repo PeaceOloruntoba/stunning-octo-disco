@@ -1,4 +1,3 @@
-// hooks/auth.ts
 import { useState, useEffect } from "react";
 import {
   createUserWithEmailAndPassword,
@@ -7,26 +6,27 @@ import {
   onAuthStateChanged,
   User,
   UserCredential,
+  sendEmailVerification,
 } from "firebase/auth";
 import { auth } from "../config/firebase";
 
-// Hook for authentication state
 export const useAuthState = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      setIsEmailVerified(user ? user.emailVerified : false);
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
-  return { user, loading };
+  return { user, loading, isEmailVerified };
 };
 
-// Hook for signup
 export const useSignup = () => {
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +40,7 @@ export const useSignup = () => {
   }> => {
     setError(null);
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("Passwörter stimmen nicht überein");
       return { userCredential: null, emailExists: false };
     }
     try {
@@ -49,7 +49,11 @@ export const useSignup = () => {
         email,
         password
       );
-      console.log("Signed up:", userCredential.user);
+      await sendEmailVerification(userCredential.user);
+      console.log(
+        "Signed up and verification email sent:",
+        userCredential.user
+      );
       return { userCredential, emailExists: false };
     } catch (err: any) {
       if (err.code === "auth/email-already-in-use") {
@@ -66,14 +70,13 @@ export const useSignup = () => {
   return { signup, error };
 };
 
-// Hook for login
 export const useLogin = () => {
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false); // Add loading state
+  const [loading, setLoading] = useState(false);
 
   const login = async (email: string, password: string) => {
     setError(null);
-    setLoading(true); // Set loading true
+    setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
@@ -84,14 +87,38 @@ export const useLogin = () => {
     } catch (err: any) {
       setError(err.message);
     } finally {
-      setLoading(false); // Set loading false
+      setLoading(false);
     }
   };
 
-  return { login, error, loading }; // Export loading
+  return { login, error, loading };
 };
 
-// Hook for logout
+export const useSendVerificationEmail = () => {
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const sendVerificationEmail = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        await sendEmailVerification(user);
+        console.log("Verification email sent");
+      } else {
+        setError("Kein Benutzer eingeloggt");
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { sendVerificationEmail, error, loading };
+};
+
 export const useLogout = () => {
   const [error, setError] = useState<string | null>(null);
 
