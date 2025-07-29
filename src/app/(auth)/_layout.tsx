@@ -7,23 +7,28 @@ import { View, ActivityIndicator, Text } from "react-native";
 export default function AuthLayout() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, loading } = useAuthState();
+  const { user, loading, isEmailVerified } = useAuthState();
 
   useEffect(() => {
     if (!loading) {
       if (user) {
-        router.replace("/(auth)/check-profile");
+        if (!isEmailVerified) {
+          router.replace("/(auth)/verify-email");
+        } else {
+          router.replace("/(auth)/check-profile");
+        }
       } else {
         const currentPath = pathname;
         if (
           currentPath !== "/(auth)/login" &&
-          currentPath !== "/(auth)/signup"
+          currentPath !== "/(auth)/signup" &&
+          currentPath !== "/(auth)/verify-email"
         ) {
           router.replace("/(auth)/login");
         }
       }
     }
-  }, [user, loading, router]);
+  }, [user, loading, isEmailVerified, router]);
 
   if (loading) {
     return (
@@ -40,6 +45,7 @@ export default function AuthLayout() {
     <Stack>
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="signup" options={{ headerShown: false }} />
+      <Stack.Screen name="verify-email" options={{ headerShown: false }} />
       <Stack.Screen name="check-profile" options={{ headerShown: false }} />
     </Stack>
   );
