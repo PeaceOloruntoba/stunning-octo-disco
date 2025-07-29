@@ -101,8 +101,7 @@ export default function SignupScreen() {
       );
 
       if (profileCreated) {
-        Alert.alert("Erfolg", "Konto erfolgreich erstellt!");
-        router.replace("/preferences");
+        router.replace("/(auth)/verify-email");
       } else if (profileError) {
         Alert.alert(
           "Fehler beim Profil",
@@ -116,7 +115,6 @@ export default function SignupScreen() {
 
   const onDateChange = (event: any, selectedDate?: Date) => {
     const currentDate = selectedDate || dateOfBirth;
-
     setShowDatePicker(Platform.OS === "ios" ? true : false);
     setDateOfBirth(currentDate);
   };
@@ -229,7 +227,6 @@ export default function SignupScreen() {
               </Text>
             </View>
           </View>
-          {/* Datenschutz Checkbox */}
           <View className="p-3 bg-white rounded-lg border border-gray-300 flex-row items-center">
             <Checkbox
               value={datenschutzAccepted}
@@ -244,13 +241,11 @@ export default function SignupScreen() {
             </View>
           </View>
         </View>
-        <Text>
-          {(signupError || profileError) && (
-            <Text className="text-red-500 mb-5 text-center">
-              {signupError || profileError}
-            </Text>
-          )}
-        </Text>
+        {(signupError || profileError) && (
+          <Text className="text-red-500 mb-5 text-center">
+            {signupError || profileError}
+          </Text>
+        )}
         <TouchableOpacity
           className="w-full p-3 bg-blue-500 rounded-lg flex-row justify-center items-center mt-4"
           onPress={handleSignup}
