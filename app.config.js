@@ -21,6 +21,13 @@ module.exports = ({ config }) => {
         },
       ],
       "expo-location",
+      [
+        "@stripe/stripe-react-native",
+        {
+          merchantIdentifier: "merchant.com.eventura.app",
+          enableGooglePay: false,
+        },
+      ],
       ...plugins,
     ],
     extra: {
@@ -36,6 +43,8 @@ module.exports = ({ config }) => {
       EXPO_PUBLIC_FIREBASE_APP_ID: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
       EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID:
         process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
+      EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY:
+        process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY,
       eas: {
         projectId: "3aa5679f-bcde-48b9-b88f-ccd5b4a5afc5",
       },
