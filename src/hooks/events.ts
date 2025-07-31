@@ -410,3 +410,32 @@ export const useParticipatedEvents = (user: User | null) => {
     updateParticipatedEventStatus,
   };
 };
+
+export const checkPaymentExists = async (
+  userId: string,
+  eventId: string
+): Promise<boolean> => {
+  try {
+    console.log(
+      `[Firebase] Checking payment for user ${userId} and event ${eventId}`
+    );
+    const paymentsQuery = query(
+      collection(db, "payments"),
+      where("userId", "==", userId),
+      where("eventId", "==", eventId),
+      where("status", "==", "succeeded")
+    );
+    const querySnapshot = await getDocs(paymentsQuery);
+    const paymentExists = !querySnapshot.empty;
+    console.log(
+      `[Firebase] Payment exists for event ${eventId}: ${paymentExists}`
+    );
+    return paymentExists;
+  } catch (err) {
+    console.error(
+      "[Firebase] Error checking payment existence:",
+      (err as Error).message
+    );
+    return false;
+  }
+};

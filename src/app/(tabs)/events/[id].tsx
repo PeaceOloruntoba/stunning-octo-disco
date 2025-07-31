@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,14 +13,18 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, Polyline } from "react-native-maps";
 import {
   useEvent,
   useFavorites,
   useParticipatedEvents,
+  checkPaymentExists,
 } from "../../../hooks/events";
 import { useAuthState } from "../../../hooks/auth";
-import { StripeProvider, usePaymentSheet } from "@stripe/stripe-react-native";
+import { StripeProvider } from "@stripe/stripe-react-native";
+import { useStripePayment } from "../../../hooks/useStripePayment";
+import * as Location from "expo-location";
+import MapViewDirections from "react-native-maps-directions";
 
 const { width } = Dimensions.get("window");
 
@@ -45,11 +49,60 @@ export default function EventDetailsScreen() {
     addParticipatedEvent,
     loading: participateLoading,
     error: participateError,
+    participatedEvents,
   } = useParticipatedEvents(user);
-  const { initPaymentSheet, presentPaymentSheet } = usePaymentSheet();
+  const { handlePayment, paymentLoading, hasPaid } = useStripePayment();
   const [mapExpanded, setMapExpanded] = useState(false);
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const isFavorite = eventId ? favoriteEventIds.includes(eventId) : false;
+
+  useEffect(() => {
+    console.log(
+      "[Stripe] Checking Stripe publishable key:",
+      process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ? "Present" : "Missing"
+    );
+    const checkIfPaid = async () => {
+      if (user && eventId) {
+        console.log(
+          `[Firebase] Checking if user ${user.uid} has paid for event ${eventId}`
+        );
+        const paid = await checkPaymentExists(user.uid, eventId);
+        console.log(`[Firebase] Payment exists for event ${eventId}: ${paid}`);
+      }
+    };
+    checkIfPaid();
+
+    const getUserLocation = async () => {
+      console.log("[Location] Requesting user location");
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          console.log("[Location] Permission denied");
+          setLocationError("Standortzugriff verweigert.");
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({});
+        console.log("[Location] User location obtained:", location.coords);
+        setUserLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+      } catch (err) {
+        console.log(
+          "[Location] Failed to get user location:",
+          (err as Error).message
+        );
+        setLocationError("Standort konnte nicht abgerufen werden.");
+      }
+    };
+    getUserLocation();
+  }, [user, eventId]);
 
   const handleToggleFavorite = async () => {
     if (!user) {
@@ -61,20 +114,23 @@ export default function EventDetailsScreen() {
       return;
     }
     if (eventId) {
+      console.log(`[Firebase] Toggling favorite for event ${eventId}`);
       await toggleFavorite(eventId);
     }
   };
 
   const handleParticipate = async () => {
-    if (!user) {
-      Alert.alert(
-        "Anmeldung erforderlich",
-        "Bitte melden Sie sich an, um an Events teilzunehmen."
-      );
-      router.push("/(auth)/login");
+    if (!eventId || !event) {
+      console.log("[Stripe] Event ID or event data missing");
+      Alert.alert("Fehler", "Eventdaten fehlen.");
       return;
     }
-    if (!eventId || !event) return;
+
+    if (participatedEvents.some((pe) => pe.eventId === eventId)) {
+      Alert.alert("Fehler", "Du bist bereits für dieses Event angemeldet.");
+      console.log("[Stripe] User already participating in event", eventId);
+      return;
+    }
 
     Alert.alert(
       "Zahlung für Event",
@@ -87,84 +143,14 @@ export default function EventDetailsScreen() {
         {
           text: "Bezahlen",
           onPress: async () => {
-            try {
-              // Fetch Payment Intent client secret from your backend
-              const response = await fetch(
-                "https://your-backend.com/create-payment-intent",
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    amount:
-                      parseFloat(event.price.replace(/[^0-9.]/g, "")) * 100, // Convert price to cents
-                    currency: "eur",
-                    eventId,
-                  }),
-                }
-              );
-              const { clientSecret } = await response.json();
-
-              if (!clientSecret) {
-                Alert.alert(
-                  "Fehler",
-                  "Zahlung konnte nicht initialisiert werden."
-                );
-                return;
-              }
-
-              // Initialize PaymentSheet
-              const { error: initError } = await initPaymentSheet({
-                paymentIntentClientSecret: clientSecret,
-                merchantDisplayName: "Eventura",
-              });
-
-              if (initError) {
-                Alert.alert(
-                  "Fehler",
-                  `Zahlung initialisieren fehlgeschlagen: ${initError.message}`
-                );
-                return;
-              }
-
-              // Present PaymentSheet
-              const { error: paymentError } = await presentPaymentSheet();
-
-              if (paymentError) {
-                Alert.alert(
-                  "Fehler",
-                  `Zahlung fehlgeschlagen: ${paymentError.message}`
-                );
-                return;
-              }
-
-              // Payment successful, add to participated events
-              const success = await addParticipatedEvent(eventId, "upcoming", {
-                paymentId: clientSecret,
-                amount: parseFloat(event.price.replace(/[^0-9.]/g, "")),
-                currency: "eur",
-                status: "succeeded",
-              });
-
-              if (success) {
-                Alert.alert(
-                  "Erfolg",
-                  "Du nimmst jetzt an diesem Event teil! Es wurde zu deinem Kalender hinzugefügt."
-                );
-                router.push("/(tabs)/calendar");
-              } else {
-                Alert.alert(
-                  "Fehler",
-                  participateError ||
-                    "Teilnahme konnte nicht hinzugefügt werden."
-                );
-              }
-            } catch (err) {
-              Alert.alert(
-                "Fehler",
-                `Zahlungsprozess fehlgeschlagen: ${(err as Error).message}`
-              );
+            const success = await handlePayment(
+              { price: event.price, clubName: event.clubName, id: eventId },
+              user,
+              addParticipatedEvent,
+              participateError
+            );
+            if (success) {
+              router.push("/(tabs)/calendar");
             }
           },
         },
@@ -189,9 +175,11 @@ export default function EventDetailsScreen() {
 
   const toggleMapSize = () => {
     setMapExpanded(!mapExpanded);
+    console.log(`[UI] Map ${mapExpanded ? "collapsed" : "expanded"}`);
   };
 
-  if (loading || favLoading || participateLoading) {
+  if (loading || favLoading || participateLoading || paymentLoading) {
+    console.log("[UI] Rendering loading state");
     return (
       <View className="flex-1 justify-center items-center bg-gray-100">
         <ActivityIndicator size="large" color="#0000ff" />
@@ -203,6 +191,7 @@ export default function EventDetailsScreen() {
   }
 
   if (error || !event) {
+    console.log("[UI] Rendering error state:", error);
     return (
       <SafeAreaView className="flex-1 justify-center items-center bg-gray-50 p-5">
         <Text className="text-xl font-bold text-red-500">
@@ -219,8 +208,11 @@ export default function EventDetailsScreen() {
     );
   }
 
+  console.log("[UI] Rendering event details for:", event.clubName);
   return (
-    <StripeProvider publishableKey="[your-stripe-publishable-key]">
+    <StripeProvider
+      publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""}
+    >
       <SafeAreaView className="flex-1 bg-gray-50">
         <ScrollView>
           <Image
@@ -299,6 +291,9 @@ export default function EventDetailsScreen() {
             <Text className="text-base text-gray-800 mb-2">
               {event.locationName}
             </Text>
+            {locationError && (
+              <Text className="text-red-500 mb-2">{locationError}</Text>
+            )}
             <View
               className={`w-full ${
                 mapExpanded ? "h-96" : "h-52"
@@ -309,8 +304,8 @@ export default function EventDetailsScreen() {
                 initialRegion={{
                   latitude: event.latitude,
                   longitude: event.longitude,
-                  latitudeDelta: 0.005,
-                  longitudeDelta: 0.005,
+                  latitudeDelta: 0.05,
+                  longitudeDelta: 0.05,
                 }}
                 scrollEnabled={mapExpanded}
                 zoomEnabled={mapExpanded}
@@ -324,7 +319,40 @@ export default function EventDetailsScreen() {
                         latitude: event.latitude,
                         longitude: event.longitude,
                       }}
+                      title={event.locationName}
+                      description="Event Location"
                     />
+                  )}
+                {userLocation &&
+                  typeof event.latitude === "number" &&
+                  typeof event.longitude === "number" && (
+                    <>
+                      <Marker
+                        coordinate={userLocation}
+                        title="Dein Standort"
+                        description="Aktueller Standort"
+                        pinColor="blue"
+                      />
+                      <MapViewDirections
+                        origin={userLocation}
+                        destination={{
+                          latitude: event.latitude,
+                          longitude: event.longitude,
+                        }}
+                        apikey={
+                          process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || ""
+                        }
+                        strokeWidth={3}
+                        strokeColor="blue"
+                        onError={(error) => {
+                          console.log("[Map] Route error:", error);
+                          Alert.alert(
+                            "Fehler",
+                            "Route konnte nicht geladen werden."
+                          );
+                        }}
+                      />
+                    </>
                   )}
               </MapView>
               <TouchableOpacity
@@ -356,12 +384,14 @@ export default function EventDetailsScreen() {
             <TouchableOpacity
               className="w-full p-4 bg-black rounded-lg mt-8 mb-20 items-center justify-center"
               onPress={handleParticipate}
-              disabled={participateLoading}
+              disabled={participateLoading || paymentLoading || hasPaid}
             >
-              {participateLoading ? (
+              {participateLoading || paymentLoading ? (
                 <ActivityIndicator color="white" />
               ) : (
-                <Text className="text-white font-bold text-lg">Teilnehmen</Text>
+                <Text className="text-white font-bold text-lg">
+                  {hasPaid ? "Bereits bezahlt" : "Teilnehmen"}
+                </Text>
               )}
             </TouchableOpacity>
           </View>
