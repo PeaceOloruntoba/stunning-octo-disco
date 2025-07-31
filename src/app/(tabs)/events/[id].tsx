@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -18,13 +18,9 @@ import {
   useEvent,
   useFavorites,
   useParticipatedEvents,
-  checkPaymentExists,
 } from "../../../hooks/events";
 import { useAuthState } from "../../../hooks/auth";
 import { StripeProvider, usePaymentSheet } from "@stripe/stripe-react-native";
-import { loadStripe } from "@stripe/stripe-js";
-import { doc, setDoc } from "firebase/firestore";
-import { db } from "../../../config/firebase";
 
 const { width } = Dimensions.get("window");
 
@@ -33,11 +29,6 @@ const localStyles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
 });
-
-// Initialize Stripe.js with publishable key from .env (FOR EDUCATIONAL PURPOSES ONLY)
-const stripePromise = loadStripe(
-  process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
-);
 
 export default function EventDetailsScreen() {
   const router = useRouter();
@@ -54,32 +45,11 @@ export default function EventDetailsScreen() {
     addParticipatedEvent,
     loading: participateLoading,
     error: participateError,
-    participatedEvents,
   } = useParticipatedEvents(user);
   const { initPaymentSheet, presentPaymentSheet } = usePaymentSheet();
   const [mapExpanded, setMapExpanded] = useState(false);
-  const [paymentLoading, setPaymentLoading] = useState(false);
-  const [hasPaid, setHasPaid] = useState(false);
 
   const isFavorite = eventId ? favoriteEventIds.includes(eventId) : false;
-
-  useEffect(() => {
-    console.log(
-      "[Stripe] Checking Stripe publishable key:",
-      process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ? "Present" : "Missing"
-    );
-    const checkIfPaid = async () => {
-      if (user && eventId) {
-        console.log(
-          `[Firebase] Checking if user ${user.uid} has paid for event ${eventId}`
-        );
-        const paid = await checkPaymentExists(user.uid, eventId);
-        console.log(`[Firebase] Payment exists for event ${eventId}: ${paid}`);
-        setHasPaid(paid);
-      }
-    };
-    checkIfPaid();
-  }, [user, eventId]);
 
   const handleToggleFavorite = async () => {
     if (!user) {
@@ -91,7 +61,6 @@ export default function EventDetailsScreen() {
       return;
     }
     if (eventId) {
-      console.log(`[Firebase] Toggling favorite for event ${eventId}`);
       await toggleFavorite(eventId);
     }
   };
@@ -105,21 +74,7 @@ export default function EventDetailsScreen() {
       router.push("/(auth)/login");
       return;
     }
-    if (!eventId || !event) {
-      console.log("[Stripe] Event ID or event data missing");
-      return;
-    }
-
-    if (hasPaid || participatedEvents.some((pe) => pe.eventId === eventId)) {
-      Alert.alert(
-        "Fehler",
-        "Du hast bereits für dieses Event bezahlt oder bist bereits teilnehmend."
-      );
-      console.log(
-        `[Stripe] Payment or participation already exists for event ${eventId}`
-      );
-      return;
-    }
+    if (!eventId || !event) return;
 
     Alert.alert(
       "Zahlung für Event",
@@ -132,59 +87,26 @@ export default function EventDetailsScreen() {
         {
           text: "Bezahlen",
           onPress: async () => {
-            setPaymentLoading(true);
             try {
-              console.log("[Stripe] Initializing Stripe payment flow");
-              const stripe = await stripePromise;
-              if (!stripe) {
-                console.log("[Stripe] Failed to initialize Stripe.js");
-                throw new Error("Failed to initialize Stripe.js");
-              }
-
-              const amount = Math.round(
-                parseFloat(event.price.replace(/[^0-9.]/g, "")) * 100
-              );
-              console.log(`[Stripe] Calculated amount: ${amount} cents`);
-
-              const secretKey = process.env.EXPO_PUBLIC_STRIPE_SECRET_KEY;
-              if (!secretKey) {
-                console.log(
-                  "[Stripe] Stripe secret key missing from environment"
-                );
-                throw new Error(
-                  "Stripe secret key missing from environment configuration."
-                );
-              }
-
-              console.log("[Stripe] Creating Payment Intent");
+              // Fetch Payment Intent client secret from your backend
               const response = await fetch(
-                "https://api.stripe.com/v1/payment_intents",
+                "https://your-backend.com/create-payment-intent",
                 {
                   method: "POST",
                   headers: {
-                    Authorization: `Bearer ${secretKey}`, // INSECURE: DO NOT USE IN PRODUCTION
-                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Content-Type": "application/json",
                   },
-                  body: new URLSearchParams({
-                    amount: amount.toString(),
+                  body: JSON.stringify({
+                    amount:
+                      parseFloat(event.price.replace(/[^0-9.]/g, "")) * 100, // Convert price to cents
                     currency: "eur",
-                    payment_method_types: "card",
-                  }).toString(),
+                    eventId,
+                  }),
                 }
               );
-
-              const paymentIntentData = await response.json();
-              console.log(
-                "[Stripe] Payment Intent response:",
-                paymentIntentData
-              );
-
-              const { client_secret: clientSecret } = paymentIntentData;
+              const { clientSecret } = await response.json();
 
               if (!clientSecret) {
-                console.log(
-                  "[Stripe] Failed to retrieve client_secret from Payment Intent"
-                );
                 Alert.alert(
                   "Fehler",
                   "Zahlung konnte nicht initialisiert werden."
@@ -192,19 +114,13 @@ export default function EventDetailsScreen() {
                 return;
               }
 
-              console.log(
-                "[Stripe] Initializing PaymentSheet with clientSecret"
-              );
+              // Initialize PaymentSheet
               const { error: initError } = await initPaymentSheet({
                 paymentIntentClientSecret: clientSecret,
                 merchantDisplayName: "Eventura",
               });
 
               if (initError) {
-                console.log(
-                  "[Stripe] PaymentSheet initialization failed:",
-                  initError.message
-                );
                 Alert.alert(
                   "Fehler",
                   `Zahlung initialisieren fehlgeschlagen: ${initError.message}`
@@ -212,14 +128,10 @@ export default function EventDetailsScreen() {
                 return;
               }
 
-              console.log("[Stripe] Presenting PaymentSheet");
+              // Present PaymentSheet
               const { error: paymentError } = await presentPaymentSheet();
 
               if (paymentError) {
-                console.log(
-                  "[Stripe] PaymentSheet presentation failed:",
-                  paymentError.message
-                );
                 Alert.alert(
                   "Fehler",
                   `Zahlung fehlgeschlagen: ${paymentError.message}`
@@ -227,45 +139,21 @@ export default function EventDetailsScreen() {
                 return;
               }
 
-              console.log(
-                "[Stripe] Payment succeeded, storing payment details in Firebase"
-              );
-              const paymentDocRef = doc(db, "payments", clientSecret);
-              await setDoc(paymentDocRef, {
-                paymentId: clientSecret,
-                userId: user.uid,
-                eventId,
-                amount: amount / 100,
-                currency: "eur",
-                status: "succeeded",
-                timestamp: new Date().toISOString(),
-              });
-              console.log(`[Firebase] Payment stored with ID: ${clientSecret}`);
-
-              console.log(
-                `[Firebase] Adding event ${eventId} to participated events`
-              );
+              // Payment successful, add to participated events
               const success = await addParticipatedEvent(eventId, "upcoming", {
                 paymentId: clientSecret,
-                amount: amount / 100,
+                amount: parseFloat(event.price.replace(/[^0-9.]/g, "")),
                 currency: "eur",
                 status: "succeeded",
               });
 
               if (success) {
-                console.log(
-                  `[Firebase] Event ${eventId} added to participated events`
-                );
                 Alert.alert(
                   "Erfolg",
                   "Du nimmst jetzt an diesem Event teil! Es wurde zu deinem Kalender hinzugefügt."
                 );
                 router.push("/(tabs)/calendar");
               } else {
-                console.log(
-                  "[Firebase] Failed to add event to participated events:",
-                  participateError
-                );
                 Alert.alert(
                   "Fehler",
                   participateError ||
@@ -273,17 +161,10 @@ export default function EventDetailsScreen() {
                 );
               }
             } catch (err) {
-              console.log(
-                "[Stripe] Payment process failed:",
-                (err as Error).message
-              );
               Alert.alert(
                 "Fehler",
                 `Zahlungsprozess fehlgeschlagen: ${(err as Error).message}`
               );
-            } finally {
-              setPaymentLoading(false);
-              console.log("[Stripe] Payment flow completed");
             }
           },
         },
@@ -308,11 +189,9 @@ export default function EventDetailsScreen() {
 
   const toggleMapSize = () => {
     setMapExpanded(!mapExpanded);
-    console.log(`[UI] Map ${mapExpanded ? "collapsed" : "expanded"}`);
   };
 
-  if (loading || favLoading || participateLoading || paymentLoading) {
-    console.log("[UI] Rendering loading state");
+  if (loading || favLoading || participateLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-gray-100">
         <ActivityIndicator size="large" color="#0000ff" />
@@ -324,7 +203,6 @@ export default function EventDetailsScreen() {
   }
 
   if (error || !event) {
-    console.log("[UI] Rendering error state:", error);
     return (
       <SafeAreaView className="flex-1 justify-center items-center bg-gray-50 p-5">
         <Text className="text-xl font-bold text-red-500">
@@ -341,11 +219,8 @@ export default function EventDetailsScreen() {
     );
   }
 
-  console.log("[UI] Rendering event details for:", event.clubName);
   return (
-    <StripeProvider
-      publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""}
-    >
+    <StripeProvider publishableKey="[your-stripe-publishable-key]">
       <SafeAreaView className="flex-1 bg-gray-50">
         <ScrollView>
           <Image
@@ -481,14 +356,12 @@ export default function EventDetailsScreen() {
             <TouchableOpacity
               className="w-full p-4 bg-black rounded-lg mt-8 mb-20 items-center justify-center"
               onPress={handleParticipate}
-              disabled={participateLoading || paymentLoading || hasPaid}
+              disabled={participateLoading}
             >
-              {participateLoading || paymentLoading ? (
+              {participateLoading ? (
                 <ActivityIndicator color="white" />
               ) : (
-                <Text className="text-white font-bold text-lg">
-                  {hasPaid ? "Bereits bezahlt" : "Teilnehmen"}
-                </Text>
+                <Text className="text-white font-bold text-lg">Teilnehmen</Text>
               )}
             </TouchableOpacity>
           </View>

@@ -11,7 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import MapView, { Marker, Polyline } from "react-native-maps";
+import MapView, { Marker } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEvents } from "../../../hooks/events";
@@ -32,7 +32,6 @@ export default function EventsScreen() {
     latitude: number;
     longitude: number;
   } | null>(null);
-  const [routes, setRoutes] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -47,35 +46,8 @@ export default function EventsScreen() {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       });
-
-      // Fetch routes for all events
-      if (events.length > 0 && location) {
-        const newRoutes = await Promise.all(
-          events.map(async (event) => {
-            try {
-              const response = await fetch(
-                `https://api.openrouteservice.org/v2/directions/foot-walking?api_key=${process.env.EXPO_PUBLIC_OPENROUTESERVICE_API_KEY}&start=${location.coords.longitude},${location.coords.latitude}&end=${event.longitude},${event.latitude}`
-              );
-              const data = await response.json();
-              return {
-                eventId: event.id,
-                coordinates: data.features[0].geometry.coordinates.map(
-                  ([lon, lat]: [number, number]) => ({
-                    latitude: lat,
-                    longitude: lon,
-                  })
-                ),
-              };
-            } catch (err) {
-              console.error(`Error fetching route for event ${event.id}:`, err);
-              return null;
-            }
-          })
-        );
-        setRoutes(newRoutes.filter((route) => route !== null));
-      }
     })();
-  }, [events]);
+  }, []);
 
   if (loading || !userLocation) {
     return (
@@ -115,7 +87,7 @@ export default function EventsScreen() {
   return (
     <SafeAreaView className="flex-1">
       <View className="flex-1 w-full h-full">
-        <MapView style={[localStyles.map]} initialRegion={initialMapRegion}>
+        <MapView style={localStyles.map} initialRegion={initialMapRegion}>
           {userLocation && (
             <Marker
               coordinate={userLocation}
@@ -124,26 +96,15 @@ export default function EventsScreen() {
             />
           )}
           {events.map((event) => (
-            <React.Fragment key={event.id}>
-              <Marker
-                coordinate={{
-                  latitude: event.latitude,
-                  longitude: event.longitude,
-                }}
-                title={event.clubName}
-                description={`${event.price} für ${event.duration}`}
-              />
-              {routes.find((route) => route.eventId === event.id) && (
-                <Polyline
-                  coordinates={
-                    routes.find((route) => route.eventId === event.id)!
-                      .coordinates
-                  }
-                  strokeColor="#FF0000"
-                  strokeWidth={3}
-                />
-              )}
-            </React.Fragment>
+            <Marker
+              key={event.id}
+              coordinate={{
+                latitude: event.latitude,
+                longitude: event.longitude,
+              }}
+              title={event.clubName}
+              description={`${event.price} für ${event.duration}`}
+            />
           ))}
         </MapView>
         <View className="absolute top-12 left-5 right-5 flex-row items-center justify-between bg-white rounded-lg p-3 shadow-md">
