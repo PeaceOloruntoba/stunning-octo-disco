@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const { version } = require("react");
 
 module.exports = ({ config }) => {
@@ -46,6 +48,8 @@ module.exports = ({ config }) => {
       EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY:
         process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY,
       EXPO_PUBLIC_STRIPE_SECRET_KEY: process.env.EXPO_PUBLIC_STRIPE_SECRET_KEY,
+      EXPO_PUBLIC_GOOGLE_MAPS_API_KEY:
+        process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
       eas: {
         projectId: "3aa5679f-bcde-48b9-b88f-ccd5b4a5afc5",
       },
