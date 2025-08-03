@@ -61,7 +61,7 @@ module.exports = ({ config }) => {
       package: "com.eventura.app",
       versionCode: 1,
       permissions: ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
-      googleServicesFile: "./google-services.json",
+      // googleServicesFile: "./google-services.json",
     },
   };
 };
